@@ -88,7 +88,6 @@
       feedStatus.innerHTML = '<span class="loading-dots" aria-label="Loading more stories"><i></i><i></i><i></i></span>';
       return;
     }
-    feedGrid.innerHTML = '<div class="empty-state"><strong>Gathering the latest stories…</strong>Just a moment.</div>';
     feedGrid.setAttribute('aria-busy', 'true');
     feedStatus.textContent = '';
   };

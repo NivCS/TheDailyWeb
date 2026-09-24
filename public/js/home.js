@@ -169,6 +169,56 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids])); } catch { /* Reading still works if storage is disabled. */ }
   };
 
+  const commentMarkup = (comment) => `<article class="comment-item">
+    <div class="comment-meta"><strong>${escapeHtml(comment.author || 'Guest')}</strong><time datetime="${escapeHtml(comment.createdAt)}">${escapeHtml(formatDate(comment.createdAt))}</time></div>
+    <p>${escapeHtml(comment.body)}</p>
+  </article>`;
+
+  async function loadComments(slug) {
+    const list = document.getElementById('comment-list');
+    const status = document.getElementById('comment-status');
+    try {
+      const response = await fetch(`/api/articles/${encodeURIComponent(slug)}/comments`, { headers: { Accept: 'application/json' } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Comments could not be loaded.');
+      list.innerHTML = data.comments.length ? data.comments.map(commentMarkup).join('') : '<p class="comment-empty">No comments yet. Start the conversation.</p>';
+      status.textContent = '';
+    } catch (error) {
+      status.textContent = error.message || 'Comments could not be loaded. Please try again.';
+    }
+  }
+
+  function bindCommentForm(slug) {
+    const form = document.getElementById('comment-form');
+    const status = document.getElementById('comment-status');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submit = form.querySelector('button[type="submit"]');
+      const formData = new FormData(form);
+      const payload = { author: formData.get('author'), body: formData.get('body') };
+      submit.disabled = true;
+      status.textContent = 'Posting your comment…';
+      try {
+        const response = await fetch(`/api/articles/${encodeURIComponent(slug)}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Your comment could not be posted.');
+        const list = document.getElementById('comment-list');
+        list.querySelector('.comment-empty')?.remove();
+        list.insertAdjacentHTML('beforeend', commentMarkup(data.comment));
+        form.reset();
+        status.textContent = 'Your comment was posted.';
+      } catch (error) {
+        status.textContent = error.message || 'Your comment could not be posted. Please try again.';
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+
   async function openStory(slug, { push = true } = {}) {
     if (push) {
       if (location.pathname === '/') savedHomeUrl = `${location.pathname}${location.search}`;
@@ -194,7 +244,21 @@
         </header>
         <div class="detail-image-wrap"><img class="detail-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}"></div>
         <div class="detail-body">${(article.content || [article.excerpt]).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}<div class="detail-end">You’re reading The Daily Web</div></div>
+        <section class="comments-section" aria-labelledby="comments-title">
+          <div class="comments-heading"><p class="eyebrow"><span class="eyebrow-line"></span> Join the conversation</p><h2 id="comments-title">Comments</h2></div>
+          <div id="comment-list" class="comment-list" aria-live="polite"><p class="comment-empty">Loading comments…</p></div>
+          <form id="comment-form" class="comment-form">
+            <label for="comment-author">Name <span>(optional)</span></label>
+            <input id="comment-author" name="author" type="text" maxlength="40" autocomplete="name" placeholder="Guest">
+            <label for="comment-body">Your comment</label>
+            <textarea id="comment-body" name="body" maxlength="1000" rows="4" required placeholder="Share a thoughtful response…"></textarea>
+            <div class="comment-form-footer"><span>Up to 1,000 characters. Guests can post 3 comments per minute per device.</span><button class="comment-submit" type="submit">Post comment <span aria-hidden="true">→</span></button></div>
+            <p id="comment-status" class="comment-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
       </article>`;
+      bindCommentForm(article.slug);
+      loadComments(article.slug);
       bindStoryLinks();
     } catch {
       app.innerHTML = `<section class="detail-page"><a class="detail-back" href="/" data-back-to-feed><span aria-hidden="true">←</span> Back to all stories</a><div class="detail-error"><h1>Story not found</h1><p>This story may no longer be available.</p></div></section>`;

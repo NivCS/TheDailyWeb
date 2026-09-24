@@ -9,27 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <script defer src="/assets/js/home.js"></script>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+    <script defer src="/assets/js/home.js?v=2"></script>
   </head>
   <body id="top">
     <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
-    <header class="site-header">
-      <a class="brand" href="/" aria-label="The Daily Web home">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="brand-name">the daily<span>web</span></span>
-      </a>
-      <nav class="main-nav" aria-label="Main navigation">
-        <a href="/" class="nav-link is-active" data-home-link>Home</a>
-        <a href="/?category=World" class="nav-link" data-category-link="World">World</a>
-        <a href="/?category=Technology" class="nav-link" data-category-link="Technology">Technology</a>
-        <a href="/?category=Business" class="nav-link" data-category-link="Business">Business</a>
-        <a href="/?category=Culture" class="nav-link" data-category-link="Culture">Culture</a>
-        <a href="/?category=Climate" class="nav-link" data-category-link="Climate">Climate</a>
-      </nav>
-      <a class="header-action" href="#latest">Explore stories <span aria-hidden="true">↗</span></a>
-      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
-    </header>
+    <%- include('partials/siteHeader', { currentUser }) %>
 
     <main id="app" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">

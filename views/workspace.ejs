@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+  </head>
+  <body class="auth-body">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <%- include('partials/siteHeader', { currentUser: { username, role: roleLabel.toLowerCase() } }) %>
+    <main class="auth-main">
+      <section class="auth-card workspace-card" aria-labelledby="workspace-title">
+        <p class="eyebrow"><span class="eyebrow-line"></span> <%= roleLabel %> access</p>
+        <h1 id="workspace-title"><%= heading %></h1>
+        <p class="auth-intro">You are signed in as <strong><%= username %></strong>. Your account role is checked by the server on this page.</p>
+        <p class="workspace-next"><%= workspaceMessage %></p>
+        <a class="workspace-home" href="/">Return to the public news feed <span aria-hidden="true">→</span></a>
+      </section>
+    </main>
+    <footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
+  </body>
+</html>

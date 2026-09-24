@@ -276,10 +276,6 @@
     }
   }
 
-  menuToggle.addEventListener('click', () => {
-    const isOpen = nav.classList.toggle('is-open');
-    menuToggle.setAttribute('aria-expanded', String(isOpen));
-  });
   document.querySelectorAll('[data-category-link]').forEach((link) => link.addEventListener('click', (event) => {
     event.preventDefault();
     if (!document.getElementById('category-filter')) renderFeed();

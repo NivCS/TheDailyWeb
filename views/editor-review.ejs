@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f7f3">
+<title><%= pageTitle %></title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css?v=8"><script defer src="/assets/js/editor-review.js?v=1"></script></head>
+<body class="reporter-body"><div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+<%- include('partials/siteHeader', { currentUser, activeNav }) %>
+<main class="reporter-main editor-main" id="editor-review" data-article-id="<%= article._id %>" data-workflow-status="<%= article.workflowStatus %>" data-has-public="<%= article.hasPublicVersion %>">
+<a class="detail-back" href="/editor/articles"><span aria-hidden="true">←</span> Back to all articles</a>
+<section class="reporter-editor-heading editor-review-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> Editorial review</p><h1><%= proposed.title || article.title || 'Untitled story' %></h1><p>By <strong><%= article.author %></strong> · <%= article.category %></p></div><span class="reporter-status reporter-status-<%= article.workflowStatus %>"><%= workflowLabel %></span></section>
+<% if (article.workflowStatus === 'pending' && article.hasPublicVersion) { %><div class="reporter-public-notice"><strong>The current article is still live.</strong> The submitted version below will replace it only after approval.</div><% } %>
+<% if (article.workflowStatus === 'returned' && article.reviewNote) { %><aside class="reporter-review-note reporter-review-note-large"><strong>Previous editor note</strong><span><%= article.reviewNote %></span></aside><% } %>
+<div class="editor-version-grid">
+<section class="editor-version-card" aria-labelledby="public-version-title"><header><p class="eyebrow"><span class="eyebrow-line"></span> Current public version</p><h2 id="public-version-title"><%= article.hasPublicVersion ? article.title : 'Not published yet' %></h2></header>
+<% if (article.hasPublicVersion) { %><p class="editor-version-summary"><%= article.excerpt %></p><dl class="editor-version-meta"><div><dt>Category</dt><dd><%= article.category %></dd></div><div><dt>Published</dt><dd><%= new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(article.publishedAt)) %></dd></div></dl>
+<% if (article.image) { %><img class="editor-version-image" src="<%= article.image %>" alt="Current article image"><% } %>
+<div class="editor-version-body"><% (article.content || []).forEach((paragraph) => { %><p><%= paragraph %></p><% }) %></div>
+<% } else { %><p class="editor-no-public">This article has not been published. Approving its submission will make it visible to readers.</p><% } %></section>
+<section class="editor-version-card editor-proposed-card" aria-labelledby="proposed-version-title"><header><p class="eyebrow"><span class="eyebrow-line"></span> <%= article.workflowStatus === 'pending' ? 'Submitted version' : article.hasPublicVersion ? 'Edit the live version' : 'Editor changes' %></p><h2 id="proposed-version-title">Review the proposed content</h2></header>
+<form id="editor-working-copy">
+<label for="editor-title">Headline</label><input id="editor-title" maxlength="160" value="<%= proposed.title %>" <%= canEdit ? '' : 'disabled' %>>
+<label for="editor-excerpt">Summary</label><textarea id="editor-excerpt" maxlength="500" rows="3" <%= canEdit ? '' : 'disabled' %>><%= proposed.excerpt %></textarea>
+<label for="editor-category">Category</label><select id="editor-category" <%= canEdit ? '' : 'disabled' %>><% ['World', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'Science', 'Other'].forEach((category) => { %><option value="<%= category %>" <%= proposed.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select>
+<label for="editor-image">Main image URL</label><input id="editor-image" maxlength="1000" value="<%= proposed.image %>" <%= canEdit ? '' : 'disabled' %>>
+<label for="editor-content">Article body <span>Separate paragraphs with a blank line.</span></label><textarea id="editor-content" rows="14" <%= canEdit ? '' : 'disabled' %>><%= (proposed.content || []).join('\n\n') %></textarea>
+<% if (article.workflowStatus === 'pending') { %><div class="editor-review-actions"><button id="save-editor-changes" class="reporter-secondary-link" type="button">Save edits</button><button id="approve-editor-article" class="reporter-submit-button" type="button">Approve and publish <span aria-hidden="true">→</span></button></div>
+<label for="editor-review-note">Notes for the reporter</label><textarea id="editor-review-note" rows="4" maxlength="2000" placeholder="Explain what needs to be changed before resubmission"></textarea><button id="return-editor-article" class="editor-return-button" type="button">Return for revisions</button>
+<% } else if (article.hasPublicVersion) { %><p class="editor-publish-hint">Saving here updates the live article immediately.</p><button id="save-published-editor-changes" class="reporter-submit-button" type="button">Save and publish changes <span aria-hidden="true">→</span></button><% } %>
+</form></section></div>
+<div class="editor-review-footer"><p id="editor-action-status" role="status" aria-live="polite"></p><button id="delete-editor-article" class="reporter-delete-draft" type="button">Delete article</button></div>
+</main><footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer></body></html>

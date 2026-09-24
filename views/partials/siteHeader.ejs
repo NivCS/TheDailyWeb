@@ -9,9 +9,9 @@
         <a href="/" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'home' ? 'is-active' : '' %>">Home page</a>
         <a href="/reporter/articles" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'workspace' ? 'is-active' : '' %>">My workspace</a>
       <% } else { %>
-        <a href="/editor/articles" class="nav-link">All articles</a>
-        <a href="/editor/articles?status=pending" class="nav-link">Review queue</a>
-        <a href="/editor/analytics" class="nav-link">Impact analytics</a>
+        <a href="/" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'home' ? 'is-active' : '' %>">Home page</a>
+        <a href="/editor/articles" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'editor' ? 'is-active' : '' %>">My workspace</a>
+        <a href="/editor/analytics" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'analytics' ? 'is-active' : '' %>">Impact analytics</a>
       <% } %>
     <% } else { %>
       <a href="/" class="nav-link is-active" data-home-link>Home</a>

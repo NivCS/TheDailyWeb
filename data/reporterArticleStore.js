@@ -22,8 +22,10 @@ function publicVersion(article) {
 }
 
 function articleWorkflowStatus(article) {
-  if (article.workflowStatus) return article.workflowStatus;
-  return article.status === 'published' && article.approved ? 'published' : article.status || 'draft';
+  if (['pending', 'returned', 'published'].includes(article.workflowStatus)) return article.workflowStatus;
+  if (article.status === 'pending') return 'pending';
+  if (article.workflowStatus === 'draft' && article.status === 'published' && article.approved && !article.workingCopy?.title) return 'published';
+  return article.workflowStatus || (article.status === 'published' && article.approved ? 'published' : article.status || 'draft');
 }
 
 function ensureWorkingCopy(article) {

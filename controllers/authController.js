@@ -52,7 +52,7 @@ async function logout(req, res, next) {
 }
 
 function renderWorkspace(req, res, roleLabel, heading, workspaceMessage) {
-  res.render('workspace', { pageTitle: `${heading} | The Daily Web`, heading, roleLabel, username: req.user.username, workspaceMessage });
+  res.render('workspace', { pageTitle: `${heading} | The Daily Web`, heading, roleLabel, username: req.user.username, workspaceMessage, activeNav: heading === 'Impact analytics' ? 'analytics' : 'editor' });
 }
 
 function editorHome(req, res) {

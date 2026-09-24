@@ -18,14 +18,18 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - Category, read/unread, and publication-date/popularity filters update through AJAX requests.
 - Story cards show a headline, image, summary, category, author, and publication date.
 - Selecting a story opens its full article in the same app; read state is remembered in the browser.
+- Article pages show comments and let visitors post without refreshing the comment list.
+- Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
 - Sample stories include published and pending states so the public feed visibility rule can be demonstrated.
 
 ## Project structure
 
 - `models/Article.js` — Mongoose article schema.
+- `models/Comment.js` and `models/CommentRateLimit.js` — comment and guest rate-limit schemas.
 - `data/articleStore.js` — MongoDB article data access.
-- `controllers/articleController.js` — request handling and input normalization.
-- `routes/articleRoutes.js` — REST endpoints for the public article list and article detail.
+- `data/commentStore.js` — comment reads/writes and atomic guest rate-limit reservations.
+- `controllers/articleController.js` and `controllers/commentController.js` — request handling and input normalization.
+- `routes/articleRoutes.js` — REST endpoints for the public article list, article detail, and comments.
 - `views/home.ejs` — page template and shared navigation/footer.
 - `public/js/home.js` and `public/css/styles.css` — client-side feed behavior and responsive styling.
 

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=7">
+  </head>
+  <body class="reporter-body">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <%- include('partials/siteHeader', { currentUser, activeNav: 'workspace' }) %>
+    <main class="reporter-main">
+      <section class="reporter-heading">
+        <div><p class="eyebrow"><span class="eyebrow-line"></span> Reporter workspace</p><h1>My <span>articles</span></h1><p>Track your stories, continue a draft, or send a finished article to an editor.</p></div>
+        <a class="reporter-primary-link" href="/reporter/articles/new">Write a new article <span aria-hidden="true">→</span></a>
+      </section>
+      <form class="reporter-filters" action="/reporter/articles" method="get">
+        <label>Status
+          <select name="status">
+            <option value="all" <%= selectedStatus === 'all' ? 'selected' : '' %>>All statuses</option>
+            <option value="draft" <%= selectedStatus === 'draft' ? 'selected' : '' %>>In preparation</option>
+            <option value="pending" <%= selectedStatus === 'pending' ? 'selected' : '' %>>Awaiting editor approval</option>
+            <option value="published" <%= selectedStatus === 'published' ? 'selected' : '' %>>Published</option>
+            <option value="returned" <%= selectedStatus === 'returned' ? 'selected' : '' %>>Returned for revisions</option>
+          </select>
+        </label>
+        <label>Sort by time
+          <select name="sort">
+            <option value="newest" <%= selectedSort === 'newest' ? 'selected' : '' %>>Most recently updated</option>
+            <option value="oldest" <%= selectedSort === 'oldest' ? 'selected' : '' %>>Least recently updated</option>
+          </select>
+        </label>
+        <button class="reporter-filter-button" type="submit">Apply filters</button>
+      </form>
+      <section class="reporter-article-list" aria-label="Your articles">
+        <% if (!articles.length) { %>
+          <div class="reporter-empty"><strong><%= selectedStatus === 'all' ? 'Your first story starts here.' : 'No articles match these filters.' %></strong><span><%= selectedStatus === 'all' ? 'Create a draft and it will be saved to your account as you write.' : 'Try a different status or time order.' %></span><% if (selectedStatus === 'all') { %><a href="/reporter/articles/new">Create an article</a><% } %></div>
+        <% } %>
+        <% articles.forEach((article) => { %>
+          <article class="reporter-article-card">
+            <div class="reporter-article-main">
+              <div class="reporter-card-top"><span class="reporter-status reporter-status-<%= article.workflowStatus %>"><%= article.workflowLabel %></span><% if (article.isPublished) { %><span class="reporter-live-tag">Public version is live</span><% } %></div>
+              <h2><%= article.displayTitle %></h2>
+              <p><%= article.workingCopy?.excerpt || article.excerpt || 'No summary yet.' %></p>
+              <% if (article.workflowStatus === 'returned' && article.reviewNote) { %><div class="reporter-review-note"><strong>Editor’s note</strong><span><%= article.reviewNote %></span></div><% } %>
+              <div class="reporter-card-meta"><span><%= article.workingCopy?.category || article.category %></span><span>Updated <%= new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(article.updatedAt)) %></span></div>
+            </div>
+            <div class="reporter-card-action">
+              <% if (article.workflowStatus !== 'pending') { %><a class="reporter-secondary-link" href="/reporter/articles/<%= article._id %>/edit"><%= article.isPublished ? 'Edit a new version' : article.workflowStatus === 'returned' ? 'Make revisions' : 'Continue editing' %></a><% } else { %><span class="reporter-waiting">Waiting for editor review</span><% } %>
+              <% if (article.workflowStatus === 'draft' && article.status === 'draft' && !article.approved) { %><button class="reporter-delete-icon" type="button" data-delete-draft="<%= article._id %>" aria-label="Delete draft: <%= article.displayTitle %>" title="Delete draft"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2m3 0-.7 10H5.7L5 6m3 3v4m4-4v4"></path></svg></button><% } %>
+            </div>
+          </article>
+        <% }) %>
+      </section>
+      <a class="reporter-home-link" href="/">Return to the public news feed <span aria-hidden="true">→</span></a>
+    </main>
+    <footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
+    <script defer src="/assets/js/reporter-articles.js?v=1"></script>
+  </body>
+</html>

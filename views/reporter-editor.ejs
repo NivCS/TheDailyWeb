@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=7">
+    <script defer src="/assets/js/reporter-editor.js?v=2"></script>
+  </head>
+  <body class="reporter-body">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <%- include('partials/siteHeader', { currentUser, activeNav: 'workspace' }) %>
+    <main class="reporter-main reporter-editor-main" id="reporter-editor" data-article-id="<%= articleId %>" data-is-published="<%= isPublished %>">
+      <a class="detail-back" href="/reporter/articles"><span aria-hidden="true">←</span> Back to my articles</a>
+      <section class="reporter-editor-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> Article editor</p><h1>Work in progress</h1><p id="save-state" role="status" aria-live="polite">Loading your latest saved draft…</p></div><span class="reporter-status reporter-status-draft">In preparation</span></section>
+      <% if (isPublished) { %><div class="reporter-public-notice"><strong>Your approved article remains live.</strong> Your edits are saved as a separate version and will only appear publicly after an editor approves them.</div><% } %>
+      <% if (reviewNote) { %><aside class="reporter-review-note reporter-review-note-large"><strong>Editor’s note</strong><span><%= reviewNote %></span></aside><% } %>
+      <form id="article-editor-form" class="reporter-editor-form">
+        <label for="article-title">Headline</label><input id="article-title" name="title" maxlength="160" required placeholder="Write a clear, specific headline">
+        <label for="article-excerpt">Summary</label><textarea id="article-excerpt" name="excerpt" maxlength="500" rows="3" required placeholder="A short introduction for readers"></textarea>
+        <div class="reporter-editor-row"><label for="article-category">Category</label><select id="article-category" name="category"><option>World</option><option>Technology</option><option>Business</option><option>Climate</option><option>Culture</option><option>Health</option><option>Science</option><option>Other</option></select></div>
+        <label for="article-image">Main image URL</label><input id="article-image" name="image" type="text" inputmode="url" maxlength="1000" placeholder="https://example.com/image.jpg">
+        <label for="article-content">Article body <span>Separate paragraphs with a blank line.</span></label><textarea id="article-content" name="content" rows="18" required placeholder="Write the complete article here…"></textarea>
+        <div class="reporter-editor-footer"><span class="reporter-save-state" id="editor-save-state">Your work saves automatically.</span><div class="reporter-editor-actions"><% if (!isPublished && articleStatus === 'draft') { %><button class="reporter-delete-draft" id="delete-draft" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2m3 0-.7 10H5.7L5 6m3 3v4m4-4v4"></path></svg> Delete draft</button><% } %><button class="reporter-submit-button" id="submit-for-review" type="button">Submit to editor <span aria-hidden="true">→</span></button></div></div>
+        <p class="reporter-submit-status" id="submit-status" role="status" aria-live="polite"></p>
+      </form>
+    </main>
+    <footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
+  </body>
+</html>

@@ -55,18 +55,6 @@ function renderWorkspace(req, res, roleLabel, heading, workspaceMessage) {
   res.render('workspace', { pageTitle: `${heading} | The Daily Web`, heading, roleLabel, username: req.user.username, workspaceMessage });
 }
 
-function reporterHome(req, res) {
-  renderWorkspace(req, res, 'Reporter', 'Reporter workspace', 'Your protected reporter area is ready for the article workflow implementation.');
-}
-
-function reporterArticles(req, res) {
-  renderWorkspace(req, res, 'Reporter', 'My articles', 'Your article list and status actions will be implemented in the next project step.');
-}
-
-function newReporterArticle(req, res) {
-  renderWorkspace(req, res, 'Reporter', 'Create an article', 'The article editor and autosave workflow will be implemented in the next project step.');
-}
-
 function editorHome(req, res) {
   renderWorkspace(req, res, 'Editor', 'Editor workspace', 'Your protected editor area is ready for the article workflow implementation.');
 }
@@ -80,4 +68,4 @@ function editorAnalytics(req, res) {
   renderWorkspace(req, res, 'Editor', 'Impact analytics', 'Article view analytics will be implemented in the next project step.');
 }
 
-module.exports = { loginPage, login, logout, reporterHome, reporterArticles, newReporterArticle, editorHome, editorArticles, editorAnalytics };
+module.exports = { loginPage, login, logout, editorHome, editorArticles, editorAnalytics };

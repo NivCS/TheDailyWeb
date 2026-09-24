@@ -1,14 +1,22 @@
 const express = require('express');
-const { loginPage, login, logout, reporterHome, reporterArticles, newReporterArticle, editorHome, editorArticles, editorAnalytics } = require('../controllers/authController');
+const { loginPage, login, logout, editorHome, editorArticles, editorAnalytics } = require('../controllers/authController');
+const { createArticle, editArticlePage, getDraft, removeDraft, reporterArticlesPage, saveDraft, submitForReview } = require('../controllers/reporterController');
 const { requireRole } = require('../middleware/authentication');
 
 const router = express.Router();
 router.get('/login', loginPage);
 router.post('/login', login);
 router.post('/logout', logout);
-router.get('/reporter', requireRole('reporter'), reporterHome);
-router.get('/reporter/articles', requireRole('reporter'), reporterArticles);
-router.get('/reporter/articles/new', requireRole('reporter'), newReporterArticle);
+router.get('/reporter', requireRole('reporter'), (req, res) => res.redirect('/reporter/articles'));
+router.get('/reporter/articles', requireRole('reporter'), reporterArticlesPage);
+router.get('/reporter/articles/new', requireRole('reporter'), createArticle);
+router.post('/reporter/articles', requireRole('reporter'), createArticle);
+router.get('/reporter/articles/:id/edit', requireRole('reporter'), editArticlePage);
+router.get('/reporter/api/articles/:id', requireRole('reporter'), getDraft);
+router.delete('/reporter/api/articles/:id', requireRole('reporter'), removeDraft);
+router.put('/reporter/api/articles/:id/draft', requireRole('reporter'), saveDraft);
+router.post('/reporter/api/articles/:id/autosave', requireRole('reporter'), saveDraft);
+router.post('/reporter/api/articles/:id/submit', requireRole('reporter'), submitForReview);
 router.get('/editor', requireRole('editor'), editorHome);
 router.get('/editor/articles', requireRole('editor'), editorArticles);
 router.get('/editor/analytics', requireRole('editor'), editorAnalytics);

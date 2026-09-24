@@ -21,7 +21,7 @@ app.use(authRoutes);
 app.use('/api/articles', articleRoutes);
 
 app.get('*', (req, res) => {
-  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user });
+  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home' });
 });
 
 app.use((error, req, res, next) => {

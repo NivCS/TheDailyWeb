@@ -30,3 +30,12 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - `public/js/home.js` and `public/css/styles.css` — client-side feed behavior and responsive styling.
 
 The current milestone covers the public home page and read endpoints. The remaining role-specific workflows and create/update/delete operations can be added in later steps while extending the same MVC structure.
+
+## Accounts and authentication
+
+- Public visitors are guests and do not need accounts.
+- Reporter and editor accounts are created by running `npm run create-user` in an interactive terminal. The password is entered without echoing to the screen; do not add accounts or passwords to source control.
+- Passwords are hashed with Node.js `crypto.scrypt`; the original password is not stored.
+- Successful sign-in creates a random, HTTP-only cookie and a MongoDB-backed session that lasts seven days and remains valid across server restarts.
+- `/reporter` and `/editor` are protected on the server. A logged-in user with the wrong role receives an access-denied response.
+- In production, serve the app over HTTPS and set `NODE_ENV=production` so session cookies use the `Secure` attribute.

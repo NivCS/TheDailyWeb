@@ -4,6 +4,8 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const articleRoutes = require('./routes/articleRoutes');
+const authRoutes = require('./routes/authRoutes');
+const { loadUser } = require('./middleware/authentication');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -14,10 +16,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/assets', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
+app.use(loadUser);
+app.use(authRoutes);
 app.use('/api/articles', articleRoutes);
 
 app.get('*', (req, res) => {
-  res.render('home', { pageTitle: 'The Daily Web' });
+  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user });
 });
 
 app.use((error, req, res, next) => {

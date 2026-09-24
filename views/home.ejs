@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <meta name="description" content="Independent reporting, useful context, and thoughtful perspectives from The Daily Web.">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <script defer src="/assets/js/home.js"></script>
+  </head>
+  <body id="top">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="The Daily Web home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-name">the daily<span>web</span></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="/" class="nav-link is-active" data-home-link>Home</a>
+        <a href="/?category=World" class="nav-link" data-category-link="World">World</a>
+        <a href="/?category=Technology" class="nav-link" data-category-link="Technology">Technology</a>
+        <a href="/?category=Business" class="nav-link" data-category-link="Business">Business</a>
+        <a href="/?category=Culture" class="nav-link" data-category-link="Culture">Culture</a>
+        <a href="/?category=Climate" class="nav-link" data-category-link="Climate">Climate</a>
+      </nav>
+      <a class="header-action" href="#latest">Explore stories <span aria-hidden="true">↗</span></a>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
+    </header>
+
+    <main id="app" tabindex="-1">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> A clearer view of what matters</p>
+          <h1 id="hero-title">The world,<br><em>in perspective.</em></h1>
+          <p class="hero-description">Independent reporting and thoughtful stories for curious people. Find the signal, understand the context, and see what comes next.</p>
+          <a class="hero-link" href="#latest">Read the latest <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="art-sun"></div><div class="art-horizon"></div>
+          <div class="art-label label-top">A DAILY READ <span>001 — 365</span></div>
+          <div class="art-label label-bottom">CURIOUS BY NATURE <span>EST. 2026</span></div>
+          <div class="art-center"><span>DW</span><small>NEWS<br>WITH<br>CONTEXT</small></div>
+          <span class="art-coordinate">40° 43′ N<br>74° 00′ W</span>
+        </div>
+      </section>
+
+      <section class="ticker" aria-label="Our editorial promise">
+        <span>INDEPENDENTLY REPORTED</span><b>✳</b><span>MADE FOR THE CURIOUS</span><b>✳</b><span>CONTEXT OVER NOISE</span><b>✳</b><span>INDEPENDENTLY REPORTED</span>
+      </section>
+
+      <section class="feed-section" id="latest" aria-labelledby="feed-title">
+        <div class="section-heading">
+          <div><p class="eyebrow"><span class="eyebrow-line"></span> Fresh perspective</p><h2 id="feed-title">The latest <span>stories</span></h2></div>
+          <p class="section-note">Good reporting gives you more than the headline.</p>
+        </div>
+        <form class="feed-controls" id="feed-controls" role="search">
+          <label class="search-box" for="story-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg><input id="story-search" name="search" type="search" placeholder="Search stories, topics, writers" autocomplete="off"></label>
+          <div class="control-group">
+            <label class="select-wrap"><span class="sr-only">Category</span><select id="category-filter" name="category"><option value="">All categories</option><option>World</option><option>Technology</option><option>Business</option><option>Climate</option><option>Culture</option><option>Health</option><option>Science</option></select><span class="select-chevron">⌄</span></label>
+            <label class="select-wrap"><span class="sr-only">Reading status</span><select id="read-filter" name="readState"><option value="all">All stories</option><option value="unread">Unread</option><option value="read">Read</option></select><span class="select-chevron">⌄</span></label>
+            <label class="select-wrap sort-select"><span class="sr-only">Sort stories</span><select id="sort-filter" name="sort"><option value="date">Newest first</option><option value="popular">Most popular</option></select><span class="select-chevron">⌄</span></label>
+          </div>
+        </form>
+        <div class="feed-meta"><p id="result-summary" aria-live="polite">Loading the latest stories…</p><span><i class="live-dot"></i> Updated throughout the day</span></div>
+        <div id="feed-grid" class="feed-grid" aria-live="polite" aria-busy="true"></div>
+        <div id="feed-sentinel" class="feed-sentinel" aria-hidden="true"></div>
+        <div id="feed-status" class="feed-status" role="status"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="about">
+      <div class="footer-top"><div><a class="brand footer-brand" href="/" aria-label="The Daily Web home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">the daily<span>web</span></span></a><p>Make room for a better informed day.</p></div><a class="back-top" href="#top" aria-label="Back to top">↑</a></div>
+      <div class="footer-bottom"><span>© 2026 The Daily Web</span><span>Independent by design. Curious by nature.</span><a href="mailto:hello@thedailyweb.example">Get in touch <span aria-hidden="true">↗</span></a></div>
+    </footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

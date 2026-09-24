@@ -8,7 +8,7 @@ An English-language news homepage built as the first step of the course project.
 2. From this folder, run `npm install`.
 3. Run `npm start` and open `http://localhost:3000`.
 
-The homepage works with its built-in sample dataset when MongoDB is unavailable. To use MongoDB, start a local MongoDB server or set `MONGODB_URI` in a local `.env` file. When a database connection is available, the application inserts the sample stories that are not already present.
+The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file using the Atlas connection string. Article data is read from and stored in Atlas; the app does not use a local article-data fallback.
 
 ## Homepage features
 
@@ -23,7 +23,7 @@ The homepage works with its built-in sample dataset when MongoDB is unavailable.
 ## Project structure
 
 - `models/Article.js` — Mongoose article schema.
-- `data/articleStore.js` — sample-data and MongoDB data access.
+- `data/articleStore.js` — MongoDB article data access.
 - `controllers/articleController.js` — request handling and input normalization.
 - `routes/articleRoutes.js` — REST endpoints for the public article list and article detail.
 - `views/home.ejs` — page template and shared navigation/footer.

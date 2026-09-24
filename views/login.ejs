@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=3">
+  </head>
+  <body class="auth-body">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <header class="site-header auth-header"><a class="brand" href="/" aria-label="The Daily Web home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">the daily<span>web</span></span></a><a class="header-action" href="/">Back to stories <span aria-hidden="true">↗</span></a></header>
+    <main class="auth-main">
+      <section class="auth-card" aria-labelledby="login-title">
+        <p class="eyebrow"><span class="eyebrow-line"></span> The Daily Web</p>
+        <h1 id="login-title">Welcome back.</h1>
+        <p class="auth-intro">Sign in to continue to your Daily Web workspace.</p>
+        <% if (errorMessage) { %><p class="auth-error" role="alert"><%= errorMessage %></p><% } %>
+        <form action="/login" method="post" class="auth-form">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" autocomplete="username" minlength="3" maxlength="30" required autofocus>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+          <button class="auth-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+    </main>
+    <footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
+  </body>
+</html>

@@ -9,6 +9,9 @@
   const submitStatus = document.getElementById('submit-status');
   const submitButton = document.getElementById('submit-for-review');
   const deleteButton = document.getElementById('delete-draft');
+  const workflowBadge = document.getElementById('article-workflow-status');
+  const imagePreview = document.getElementById('article-image-preview');
+  const imagePreviewMessage = document.getElementById('article-image-preview-message');
   const fields = {
     title: document.getElementById('article-title'),
     excerpt: document.getElementById('article-excerpt'),
@@ -28,8 +31,51 @@
     excerpt: fields.excerpt.value,
     category: fields.category.value,
     image: fields.image.value,
-    content: fields.content.value.split(/\r?\n\s*\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
+    content: fields.content.value.split(/\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
   });
+
+  function updateWorkflowStatus(status) {
+    const labels = { draft: 'In preparation', pending: 'Awaiting editor approval', returned: 'Returned for revisions', published: 'Published' };
+    page.dataset.workflowStatus = status;
+    if (workflowBadge) {
+      workflowBadge.textContent = labels[status] || labels.draft;
+      workflowBadge.className = `reporter-status reporter-status-${status}`;
+    }
+    if (deleteButton) {
+      deleteButton.hidden = status !== 'draft';
+      deleteButton.lastChild.textContent = page.dataset.isPublished === 'true' ? ' Discard draft' : ' Delete draft';
+    }
+    submitButton.hidden = page.dataset.isPublished === 'true' && status === 'published';
+  }
+
+  function renderImagePreview() {
+    if (!imagePreview || !imagePreviewMessage) return;
+    const url = fields.image.value.trim();
+    imagePreview.hidden = true;
+    imagePreview.removeAttribute('src');
+    if (!url) {
+      imagePreviewMessage.textContent = 'Add an image URL to preview how it will appear on the site.';
+      imagePreviewMessage.classList.remove('is-error');
+      return;
+    }
+    if (!(url.startsWith('/') || /^https?:\/\//i.test(url))) {
+      imagePreviewMessage.textContent = 'Use a URL that starts with http://, https://, or /.';
+      imagePreviewMessage.classList.add('is-error');
+      return;
+    }
+    imagePreviewMessage.textContent = 'Loading image preview…';
+    imagePreviewMessage.classList.remove('is-error');
+    imagePreview.onload = () => {
+      imagePreview.hidden = false;
+      imagePreviewMessage.textContent = '';
+    };
+    imagePreview.onerror = () => {
+      imagePreview.hidden = true;
+      imagePreviewMessage.textContent = 'This image could not be loaded. Check the URL.';
+      imagePreviewMessage.classList.add('is-error');
+    };
+    imagePreview.src = url;
+  }
 
   const setSaved = (savedAt) => {
     const when = savedAt ? new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(new Date(savedAt)) : '';
@@ -67,6 +113,7 @@
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Your changes could not be saved.');
+      updateWorkflowStatus(data.status);
       setSaved(data.savedAt);
     })();
     try {
@@ -109,8 +156,10 @@
       fields.excerpt.value = draft.excerpt;
       fields.category.value = draft.category;
       fields.image.value = draft.image;
-      fields.content.value = draft.content.join('\n\n');
+      fields.content.value = draft.content.join('\n');
       page.dataset.isPublished = String(data.article.published);
+      updateWorkflowStatus(data.article.status);
+      renderImagePreview();
       setSaved();
       canSubmit = true;
     } catch (error) {
@@ -146,7 +195,16 @@
   }
 
   async function deleteDraft() {
-    if (!window.confirm('Delete this draft permanently?')) return;
+    const publishedVersionExists = page.dataset.isPublished === 'true';
+    const confirmed = await window.SiteDialog.confirm({
+      title: publishedVersionExists ? 'Discard this draft?' : 'Delete this draft?',
+      message: publishedVersionExists
+        ? 'Your published article will stay live, and this unpublished draft will be removed.'
+        : 'This draft will be permanently deleted.',
+      confirmLabel: publishedVersionExists ? 'Discard draft' : 'Delete draft',
+      danger: true
+    });
+    if (!confirmed) return;
     deleteButton.disabled = true;
     submitButton.disabled = true;
     clearTimeout(saveTimer);
@@ -159,7 +217,8 @@
         const data = await response.json();
         throw new Error(data.error || 'This draft could not be deleted.');
       }
-      location.href = '/reporter/articles';
+      const data = await response.json();
+      location.href = data.action === 'restored' ? '/reporter/articles?status=published' : '/reporter/articles';
     } catch (error) {
       submitStatus.textContent = error.message || 'This draft could not be deleted. Please try again.';
       deleteButton.disabled = false;
@@ -167,7 +226,10 @@
     }
   }
 
-  form.addEventListener('input', queueSave);
+  form.addEventListener('input', (event) => {
+    if (event.target === fields.image) renderImagePreview();
+    queueSave();
+  });
   form.addEventListener('change', queueSave);
   submitButton.addEventListener('click', submitForReview);
   deleteButton?.addEventListener('click', deleteDraft);

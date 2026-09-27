@@ -26,7 +26,7 @@ app.get('*', (req, res) => {
 
 app.use((error, req, res, next) => {
   console.error(error);
-  if (req.path.startsWith('/api/')) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/editor/api/')) {
     return res.status(500).json({ error: 'Something went wrong while processing this request.' });
   }
   res.status(500).send('Something went wrong. Please try again.');

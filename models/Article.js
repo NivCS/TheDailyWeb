@@ -24,6 +24,7 @@ const articleSchema = new mongoose.Schema({
   reporter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
   workflowStatus: { type: String, enum: ['draft', 'pending', 'returned', 'published'], default: 'draft', index: true },
   workingCopy: { type: workingCopySchema, default: () => ({}) },
+  submittedCopy: { type: workingCopySchema, default: undefined },
   reviewNote: { type: String, default: '' },
   submittedAt: { type: Date }
 }, { timestamps: true });

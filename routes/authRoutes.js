@@ -1,8 +1,8 @@
 const express = require('express');
-const { loginPage, login, logout, editorHome, editorArticles, editorAnalytics } = require('../controllers/authController');
+const { loginPage, login, logout, editorAnalytics } = require('../controllers/authController');
 const { createArticle, editArticlePage, getDraft, removeDraft, reporterArticlesPage, saveDraft, submitForReview } = require('../controllers/reporterController');
+const { approve, editorArticles, editorHome, editorReviewPage, removeArticle, returnForRevisions, saveChanges, savePublishedChanges } = require('../controllers/editorController');
 const { requireRole } = require('../middleware/authentication');
-
 const router = express.Router();
 router.get('/login', loginPage);
 router.post('/login', login);
@@ -19,6 +19,11 @@ router.post('/reporter/api/articles/:id/autosave', requireRole('reporter'), save
 router.post('/reporter/api/articles/:id/submit', requireRole('reporter'), submitForReview);
 router.get('/editor', requireRole('editor'), editorHome);
 router.get('/editor/articles', requireRole('editor'), editorArticles);
+router.get('/editor/articles/:id', requireRole('editor'), editorReviewPage);
+router.put('/editor/api/articles/:id', requireRole('editor'), saveChanges);
+router.put('/editor/api/articles/:id/published', requireRole('editor'), savePublishedChanges);
+router.post('/editor/api/articles/:id/approve', requireRole('editor'), approve);
+router.post('/editor/api/articles/:id/return', requireRole('editor'), returnForRevisions);
+router.delete('/editor/api/articles/:id', requireRole('editor'), removeArticle);
 router.get('/editor/analytics', requireRole('editor'), editorAnalytics);
-
 module.exports = router;

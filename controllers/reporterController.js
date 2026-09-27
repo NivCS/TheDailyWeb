@@ -2,8 +2,10 @@ const {
   articleWorkflowStatus,
   beginReporterEdit,
   createReporterArticle,
-  deleteReporterDraft,
+  removeReporterDraft,
   listReporterArticles,
+  publicVersion,
+  sameArticleVersion,
   saveReporterDraft,
   submitReporterArticle
 } = require('../data/reporterArticleStore');
@@ -55,7 +57,8 @@ async function editArticlePage(req, res, next) {
       articleId: String(article._id),
       reviewNote: article.workflowStatus === 'returned' ? article.reviewNote : '',
       isPublished: article.status === 'published' && article.approved,
-      articleStatus: articleWorkflowStatus(article)
+      articleStatus: articleWorkflowStatus(article),
+      workflowLabel: workflowLabels[articleWorkflowStatus(article)] || workflowLabels.draft
     });
   } catch (error) {
     next(error);
@@ -68,9 +71,10 @@ function normalizeWorkingCopy(input) {
   const excerpt = String(source.excerpt || '').trim().slice(0, 500);
   const category = categories.includes(source.category) ? source.category : 'World';
   const image = String(source.image || '').trim().slice(0, 1000);
-  const paragraphs = Array.isArray(source.content)
-    ? source.content.map((paragraph) => String(paragraph || '').trim()).filter(Boolean).slice(0, 100)
-    : String(source.content || '').split(/\r?\n\s*\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean).slice(0, 100);
+  const paragraphs = (Array.isArray(source.content)
+    ? source.content.flatMap((paragraph) => String(paragraph || '').split(/\r?\n/))
+    : String(source.content || '').split(/\r?\n/))
+    .map((paragraph) => paragraph.trim()).filter(Boolean).slice(0, 100);
   return { title, excerpt, content: paragraphs, category, image };
 }
 
@@ -122,9 +126,9 @@ async function saveDraft(req, res, next) {
 
 async function removeDraft(req, res, next) {
   try {
-    const deleted = await deleteReporterDraft(req.params.id, req.user.id);
-    if (!deleted) return res.status(409).json({ error: 'Only your unpublished drafts can be deleted.' });
-    res.status(204).end();
+    const result = await removeReporterDraft(req.params.id, req.user.id);
+    if (!result) return res.status(409).json({ error: 'This draft can no longer be removed.' });
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -135,6 +139,15 @@ async function submitForReview(req, res, next) {
     const article = await beginReporterEdit(req.params.id, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article cannot be submitted from its current state.' });
     const workingCopy = normalizeWorkingCopy(req.body?.workingCopy || article.workingCopy);
+    const currentStatus = articleWorkflowStatus(article);
+    if (article.status === 'published' && article.approved
+      && sameArticleVersion(publicVersion(article), workingCopy)) {
+      return res.status(409).json({ error: 'There are no changes to submit. The published article remains unchanged.' });
+    }
+    if (currentStatus === 'returned' && article.submittedCopy?.title
+      && sameArticleVersion(article.submittedCopy, workingCopy)) {
+      return res.status(409).json({ error: 'Make a change to the returned article before resubmitting it.' });
+    }
     const missing = [];
     if (!workingCopy.title) missing.push('headline');
     if (!workingCopy.excerpt) missing.push('summary');
@@ -142,8 +155,9 @@ async function submitForReview(req, res, next) {
     if (!workingCopy.image) missing.push('main image URL');
     if (missing.length) return res.status(400).json({ error: `Complete the ${missing.join(', ')} before submitting.` });
     if (!validImageUrl(workingCopy.image)) return res.status(400).json({ error: 'Use an image URL that starts with http://, https://, or /.' });
-    await saveReporterDraft(req.params.id, req.user.id, workingCopy);
-    const submitted = await submitReporterArticle(req.params.id, req.user.id);
+    const saved = await saveReporterDraft(req.params.id, req.user.id, workingCopy);
+    if (!saved) return res.status(409).json({ error: 'This article can no longer be edited.' });
+    const submitted = await submitReporterArticle(req.params.id, req.user.id, workingCopy);
     if (!submitted) return res.status(409).json({ error: 'This article cannot be submitted from its current state.' });
     res.json({ status: 'pending', message: 'Your article was sent to the editor for approval.' });
   } catch (error) {

@@ -243,7 +243,7 @@
           <div class="detail-byline"><span>By <strong>${escapeHtml(article.author)}</strong></span><time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(formatDate(article.publishedAt))}</time><span>4 min read</span></div>
         </header>
         <div class="detail-image-wrap"><img class="detail-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}"></div>
-        <div class="detail-body">${(article.content || [article.excerpt]).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}<div class="detail-end">You’re reading The Daily Web</div></div>
+        <div class="detail-body">${(article.content || [article.excerpt]).flatMap((paragraph) => String(paragraph || '').split(/\r?\n/)).filter((paragraph) => paragraph.trim()).map((paragraph) => `<p>${escapeHtml(paragraph.trim())}</p>`).join('')}<div class="detail-end">You’re reading The Daily Web</div></div>
         <section class="comments-section" aria-labelledby="comments-title">
           <div class="comments-heading"><p class="eyebrow"><span class="eyebrow-line"></span> Join the conversation</p><h2 id="comments-title">Comments</h2></div>
           <div id="comment-list" class="comment-list" aria-live="polite"><p class="comment-empty">Loading comments…</p></div>

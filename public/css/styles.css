@@ -408,10 +408,41 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .editor-review-footer p:empty { display: none; }
 .editor-review-footer button { flex: 0 0 auto; }
 .editor-main .reporter-home-link { margin-top: 24px; }
+.reporter-delete-draft[hidden], .reporter-submit-button[hidden] { display: none; }
+.reporter-image-preview-wrap { display: grid; gap: 7px; }
+.reporter-image-preview-wrap > span { color: #87938a; font-size: 9px; }
+.reporter-image-preview-frame { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1.42 / 1; overflow: hidden; border: 1px dashed #ccd7ca; background: #edf1e9; }
+.reporter-image-preview-frame img { width: 100%; height: 100%; object-fit: cover; }
+.reporter-image-preview-frame img[hidden] { display: none; }
+.reporter-image-preview-frame p { margin: 0; padding: 18px; color: #718071; font-size: 11px; line-height: 1.6; text-align: center; }
+.reporter-image-preview-frame p.is-error { color: #a34539; }
+.reporter-image-preview-frame img:not([hidden]) + p { display: none; }
+.site-dialog-layer { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: 14px; background: rgb(18 35 27 / 22%); }
+.site-dialog-panel { display: flex; width: min(100%, 620px); align-items: center; justify-content: space-between; gap: 22px; margin-top: 4px; padding: 18px 20px; border: 1px solid #e5d5aa; border-top: 4px solid #d6a944; border-radius: 4px; background: #fffdf6; box-shadow: 0 18px 50px rgb(15 28 20 / 19%); }
+.site-dialog-copy { display: flex; min-width: 0; align-items: flex-start; gap: 13px; }
+.site-dialog-symbol { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border-radius: 50%; background: #f4e7c8; color: #8c651d; font: 800 16px var(--display); }
+.site-dialog-copy h2 { margin: 1px 0 5px; color: #293a2e; font: 700 14px/1.3 var(--display); }
+.site-dialog-copy p { margin: 0; color: #66736a; font-size: 11px; line-height: 1.6; }
+.site-dialog-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.site-dialog-actions button { min-height: 37px; padding: 0 12px; border: 1px solid #d5ddd2; border-radius: 3px; background: transparent; color: #536157; font-size: 10px; font-weight: 700; cursor: pointer; }
+.site-dialog-actions button:hover { background: #edf2e9; }
+.site-dialog-actions .site-dialog-confirm { border-color: #274a38; background: #274a38; color: #fff; }
+.site-dialog-actions .site-dialog-confirm:hover { background: #1b392c; }
+.site-dialog-actions .site-dialog-confirm.is-danger { border-color: #a74e40; background: #a74e40; }
+.site-dialog-actions .site-dialog-confirm.is-danger:hover { background: #883b32; }
+.site-notice { position: fixed; top: 13px; left: 50%; z-index: 1001; display: flex; width: min(calc(100% - 28px), 560px); align-items: flex-start; justify-content: space-between; gap: 16px; padding: 14px 16px; transform: translateX(-50%); border: 1px solid #e2c4be; border-left: 4px solid #b64e40; border-radius: 3px; background: #fff9f6; box-shadow: 0 12px 36px rgb(15 28 20 / 16%); color: #57443f; }
+.site-notice.is-success { border-color: #cbdcc8; border-left-color: #4e8151; background: #f5faf2; }
+.site-notice > div { display: grid; gap: 4px; }
+.site-notice strong { font: 700 12px var(--display); }
+.site-notice span { font-size: 10px; line-height: 1.5; }
+.site-notice-close { width: 23px; height: 23px; flex: 0 0 23px; border: 0; border-radius: 50%; background: transparent; color: #78655f; font-size: 20px; cursor: pointer; }
+.site-notice-close:hover { background: rgb(167 78 64 / 10%); }
 @media (max-width: 760px) {
   .editor-filters { align-items: stretch; flex-direction: column; }
   .editor-search-label, .editor-search-label input { width: 100%; min-width: 0; }
   .editor-version-grid { grid-template-columns: 1fr; }
   .editor-version-card { padding: 17px; }
   .editor-review-footer { align-items: stretch; flex-direction: column-reverse; }
+  .site-dialog-panel { align-items: stretch; flex-direction: column; gap: 14px; padding: 16px; }
+  .site-dialog-actions { justify-content: flex-end; }
 }

@@ -5,7 +5,8 @@
   const status = document.getElementById('editor-action-status');
   const form = document.getElementById('editor-working-copy');
   const pending = page.dataset.workflowStatus === 'pending';
-  const published = page.dataset.hasPublic === 'true' && !pending;
+  const returned = page.dataset.workflowStatus === 'returned';
+  const published = page.dataset.hasPublic === 'true' && !pending && !returned;
   const fields = (pending || published) ? {
     title: document.getElementById('editor-title'),
     excerpt: document.getElementById('editor-excerpt'),
@@ -18,7 +19,7 @@
     excerpt: fields.excerpt.value,
     category: fields.category.value,
     image: fields.image.value,
-    content: fields.content.value.split(/\r?\n\s*\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
+    content: fields.content.value.split(/\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean)
   });
   async function request(path, method, body) {
     const response = await fetch('/editor/api/articles/' + id + path, {
@@ -37,7 +38,12 @@
     finally { setBusy(false); }
   });
   document.getElementById('save-published-editor-changes')?.addEventListener('click', async () => {
-    if (!window.confirm('Save and publish these changes to the live article?')) return;
+    const confirmed = await window.SiteDialog.confirm({
+      title: 'Publish these changes?',
+      message: 'The edited version will replace the article readers can see now.',
+      confirmLabel: 'Publish changes'
+    });
+    if (!confirmed) return;
     setBusy(true); status.textContent = 'Publishing changes…';
     try {
       const data = await request('/published', 'PUT', { workingCopy: workingCopy() });
@@ -47,7 +53,12 @@
   });
 
   document.getElementById('approve-editor-article')?.addEventListener('click', async () => {
-    if (!window.confirm('Approve and publish this version?')) return;
+    const confirmed = await window.SiteDialog.confirm({
+      title: 'Approve this article?',
+      message: 'This version will be published and visible to all readers.',
+      confirmLabel: 'Approve and publish'
+    });
+    if (!confirmed) return;
     setBusy(true); status.textContent = 'Publishing…';
     try {
       const data = await request('/approve', 'POST', { workingCopy: workingCopy() });
@@ -57,7 +68,13 @@
   document.getElementById('return-editor-article')?.addEventListener('click', async () => {
     const note = document.getElementById('editor-review-note').value.trim();
     if (!note) { status.textContent = 'Add a note explaining the revisions needed.'; document.getElementById('editor-review-note').focus(); return; }
-    if (!window.confirm('Return this article to the reporter for revisions?')) return;
+    const confirmed = await window.SiteDialog.confirm({
+      title: 'Return this article for revisions?',
+      message: 'The reporter will receive your note. You can still view the version sent for review and the published version, but editing will be disabled until it is resubmitted.',
+      confirmLabel: 'Return to reporter',
+      danger: true
+    });
+    if (!confirmed) return;
     setBusy(true); status.textContent = 'Returning article…';
     try {
       const data = await request('/return', 'POST', { note });
@@ -65,7 +82,13 @@
     } catch (error) { status.textContent = error.message; setBusy(false); }
   });
   document.getElementById('delete-editor-article')?.addEventListener('click', async () => {
-    if (!window.confirm('Delete this article permanently? This cannot be undone.')) return;
+    const confirmed = await window.SiteDialog.confirm({
+      title: 'Delete this article?',
+      message: 'This article will be permanently removed. This action cannot be undone.',
+      confirmLabel: 'Delete article',
+      danger: true
+    });
+    if (!confirmed) return;
     setBusy(true); status.textContent = 'Deleting article…';
     try { const data = await request('', 'DELETE'); location.href = data.redirectTo; }
     catch (error) { status.textContent = error.message; setBusy(false); }

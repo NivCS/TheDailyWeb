@@ -35,10 +35,12 @@ async function editorReviewPage(req, res, next) {
     if (!article) return res.status(404).render('access-denied', { pageTitle: 'Article unavailable' });
     res.render('editor-review', {
       pageTitle: 'Review article | The Daily Web', currentUser: req.user, article,
-      proposed: article.hasPublicVersion && article.workflowStatus !== 'pending'
+      proposed: article.workflowStatus === 'returned'
+        ? article.workingCopy
+        : article.hasPublicVersion && article.workflowStatus !== 'pending'
         ? { title: article.title, excerpt: article.excerpt, content: article.content, category: article.category, image: article.image }
         : article.workingCopy,
-      canEdit: article.workflowStatus === 'pending' || article.hasPublicVersion,
+      canEdit: article.workflowStatus === 'pending' || (article.hasPublicVersion && article.workflowStatus !== 'returned'),
       activeNav: 'editor',
       workflowLabel: article.workflowStatus === 'pending' && article.hasPublicVersion
         ? 'Update awaiting approval' : labels[article.workflowStatus] || 'In preparation'
@@ -51,9 +53,10 @@ function normalizeWorkingCopy(input) {
   const excerpt = String(source.excerpt || '').trim().slice(0, 500);
   const category = categories.includes(source.category) ? source.category : 'World';
   const image = String(source.image || '').trim().slice(0, 1000);
-  const content = Array.isArray(source.content)
-    ? source.content.map((paragraph) => String(paragraph || '').trim()).filter(Boolean).slice(0, 100)
-    : String(source.content || '').split(/\r?\n\s*\r?\n/).map((paragraph) => paragraph.trim()).filter(Boolean).slice(0, 100);
+  const content = (Array.isArray(source.content)
+    ? source.content.flatMap((paragraph) => String(paragraph || '').split(/\r?\n/))
+    : String(source.content || '').split(/\r?\n/))
+    .map((paragraph) => paragraph.trim()).filter(Boolean).slice(0, 100);
   return { title, excerpt, content, category, image };
 }
 function validateWorkingCopy(copy) {
@@ -110,7 +113,7 @@ async function returnForRevisions(req, res, next) {
 async function removeArticle(req, res, next) {
   try {
     const deleted = await deleteEditorArticle(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'This article no longer exists.' });
+    if (!deleted) return res.status(409).json({ error: 'Returned articles are read-only until the reporter resubmits them.' });
     res.json({ redirectTo: '/editor/articles', message: 'The article was deleted.' });
   } catch (error) { next(error); }
 }

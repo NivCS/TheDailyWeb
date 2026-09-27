@@ -8,6 +8,14 @@ function pendingFilter(id) {
 function editorVersion(article) {
   const workingCopy = article.workingCopy?.toObject ? article.workingCopy.toObject() : article.workingCopy;
   if (article.status === 'published' && article.approved && articleWorkflowStatus(article) === 'published') return publicVersion(article);
+  if (articleWorkflowStatus(article) === 'returned' && article.submittedCopy?.title) {
+    const submittedCopy = article.submittedCopy?.toObject ? article.submittedCopy.toObject() : article.submittedCopy;
+    return {
+      title: submittedCopy.title || '', excerpt: submittedCopy.excerpt || '',
+      content: Array.isArray(submittedCopy.content) ? submittedCopy.content : [],
+      category: submittedCopy.category || article.category || 'World', image: submittedCopy.image || ''
+    };
+  }
   if (workingCopy?.title) return {
     title: workingCopy.title || '', excerpt: workingCopy.excerpt || '',
     content: Array.isArray(workingCopy.content) ? workingCopy.content : [],
@@ -46,12 +54,12 @@ async function approveEditorArticle(id, workingCopy) {
     category: workingCopy.category, image: workingCopy.image, workingCopy,
     status: 'published', approved: true, workflowStatus: 'published',
     publishedAt: new Date(), reviewNote: ''
-  } }, { new: true, runValidators: true }).lean();
+  }, $unset: { submittedCopy: 1 } }, { new: true, runValidators: true }).lean();
 }
 async function savePublishedEditorChanges(id, workingCopy) {
   if (!validId(id)) return null;
   const article = await Article.findOneAndUpdate(
-    { _id: id, status: 'published', approved: true, workflowStatus: { $ne: 'pending' } },
+    { _id: id, status: 'published', approved: true, workflowStatus: { $nin: ['pending', 'returned'] } },
     { $set: {
       title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
       category: workingCopy.category, image: workingCopy.image, publishedAt: new Date()
@@ -65,7 +73,7 @@ async function savePublishedEditorChanges(id, workingCopy) {
   if (reporterDraftExists) return article;
 
   return Article.findOneAndUpdate(
-    { _id: id, status: 'published', approved: true, workflowStatus: { $ne: 'pending' } },
+    { _id: id, status: 'published', approved: true, workflowStatus: { $nin: ['pending', 'returned'] } },
     { $set: { workingCopy, workflowStatus: 'published' } },
     { new: true, runValidators: true }
   ).lean();
@@ -73,11 +81,20 @@ async function savePublishedEditorChanges(id, workingCopy) {
 
 async function returnEditorArticle(id, note) {
   if (!validId(id)) return null;
-  return Article.findOneAndUpdate(pendingFilter(id), { $set: { workflowStatus: 'returned', reviewNote: note } }, { new: true, runValidators: true }).lean();
+  const article = await Article.findOne(pendingFilter(id)).lean();
+  if (!article) return null;
+  const submittedCopy = article.submittedCopy?.title
+    ? article.submittedCopy
+    : article.workingCopy?.title ? article.workingCopy : publicVersion(article);
+  return Article.findOneAndUpdate(
+    { ...pendingFilter(id), updatedAt: article.updatedAt },
+    { $set: { workflowStatus: 'returned', reviewNote: note, submittedCopy } },
+    { new: true, runValidators: true }
+  ).lean();
 }
 async function deleteEditorArticle(id) {
   if (!validId(id)) return false;
-  const result = await Article.deleteOne({ _id: id });
+  const result = await Article.deleteOne({ _id: id, workflowStatus: { $ne: 'returned' } });
   return result.deletedCount === 1;
 }
 module.exports = {

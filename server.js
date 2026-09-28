@@ -15,6 +15,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/assets', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules', 'chart.js', 'dist'), { maxAge: '1d' }));
+app.use('/vendor/chartjs-plugin-annotation', express.static(path.join(__dirname, 'node_modules', 'chartjs-plugin-annotation', 'dist'), { maxAge: '1d' }));
 
 app.use(loadUser);
 app.use(authRoutes);

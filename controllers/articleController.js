@@ -1,4 +1,5 @@
 const { listPublishedArticles, findPublishedArticle } = require('../data/articleStore');
+const { recordArticleView } = require('../data/analyticsStore');
 
 const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
 
@@ -27,6 +28,12 @@ async function detail(req, res, next) {
   try {
     const article = await findPublishedArticle(req.params.id);
     if (!article) return res.status(404).json({ error: 'This story could not be found.' });
+    try {
+      await recordArticleView(article._id);
+      article.views = Number(article.views || 0) + 1;
+    } catch (analyticsError) {
+      console.error('Could not record article view:', analyticsError.message);
+    }
     res.json({ article });
   } catch (error) {
     next(error);

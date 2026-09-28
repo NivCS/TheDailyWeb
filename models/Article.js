@@ -17,7 +17,6 @@ const articleSchema = new mongoose.Schema({
   author: { type: String, required: true },
   image: { type: String, default: '' },
   publishedAt: { type: Date, required: true, index: true },
-  views: { type: Number, default: 0, min: 0 },
   // `status` and `approved` describe the public version; workflowStatus tracks the reporter's current working copy.
   status: { type: String, enum: ['draft', 'pending', 'published'], default: 'draft', index: true },
   approved: { type: Boolean, default: false, index: true },

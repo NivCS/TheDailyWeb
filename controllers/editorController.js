@@ -85,7 +85,7 @@ async function savePublishedChanges(req, res, next) {
     const workingCopy = normalizeWorkingCopy(req.body?.workingCopy);
     const problem = validateWorkingCopy(workingCopy);
     if (problem) return res.status(400).json({ error: problem });
-    const article = await savePublishedEditorChanges(req.params.id, workingCopy);
+    const article = await savePublishedEditorChanges(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer available as a published article.' });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles/' + article._id, message: 'Changes are now published.' });
   } catch (error) { next(error); }
@@ -96,7 +96,7 @@ async function approve(req, res, next) {
     const workingCopy = normalizeWorkingCopy(req.body?.workingCopy);
     const problem = validateWorkingCopy(workingCopy);
     if (problem) return res.status(400).json({ error: problem });
-    const article = await approveEditorArticle(req.params.id, workingCopy);
+    const article = await approveEditorArticle(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer awaiting review.' });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles?status=published', message: 'The article is now published.' });
   } catch (error) { next(error); }

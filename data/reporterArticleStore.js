@@ -62,7 +62,7 @@ async function createReporterArticle(reporterId, username) {
     category: 'World',
     author: username,
     image: '',
-    publishedAt: new Date(),
+    publishedAt: null,
     reporter: reporterId,
     status: 'draft',
     approved: false,

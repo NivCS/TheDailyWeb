@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=7">
+  </head>
+  <body id="top">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <%- include('partials/siteHeader', { currentUser, activeNav }) %>
+    <main class="detail-page"><a class="detail-back" href="/"><span aria-hidden="true">←</span> Back to all stories</a><div class="detail-error"><h1>Story not found</h1><p>This story may no longer be available.</p></div></main>
+    <footer class="site-footer" id="about"><div class="footer-bottom"><span>© 2026 The Daily Web</span><span>Independent by design. Curious by nature.</span><a href="mailto:hello@thedailyweb.example">Get in touch <span aria-hidden="true">↗</span></a></div></footer>
+  </body>
+</html>

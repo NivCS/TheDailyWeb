@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 const Article = require('../models/Article');
-const ArticleAnalytics = require('../models/ArticleAnalytics');
 const ArticleViewBucket = require('../models/ArticleViewBucket');
 const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
+const Comment = require('../models/Comment');
 const { recordPublicationEvent } = require('./analyticsStore');
 const { articleWorkflowStatus, publicVersion } = require('./reporterArticleStore');
+const { estimateReadingTimeMinutes } = require('../services/readingTime');
 function validId(id) { return mongoose.isValidObjectId(id); }
 function pendingFilter(id) {
   return { _id: id, $or: [{ workflowStatus: 'pending' }, { workflowStatus: { $exists: false }, status: 'pending' }, { workflowStatus: 'draft', status: 'pending' }] };
@@ -67,8 +68,10 @@ async function approveEditorArticle(id, workingCopy, editorId) {
         { $set: {
           title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
           category: workingCopy.category, image: workingCopy.image, workingCopy,
+          readingTimeMinutes: estimateReadingTimeMinutes(workingCopy.content),
           status: 'published', approved: true, workflowStatus: 'published',
-          publishedAt: eventAt, reviewNote: ''
+          ...((current.status === 'published' && current.approved) ? {} : { publishedAt: eventAt }),
+          reviewNote: ''
         }, $unset: { submittedCopy: 1 } },
         { new: true, runValidators: true, session }
       ).lean();
@@ -105,7 +108,8 @@ async function savePublishedEditorChanges(id, workingCopy, editorId) {
       const reporterDraftExists = ['draft', 'returned'].includes(current.workflowStatus) && current.workingCopy?.title;
       const set = {
         title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
-        category: workingCopy.category, image: workingCopy.image, publishedAt: eventAt
+        category: workingCopy.category, image: workingCopy.image,
+        readingTimeMinutes: estimateReadingTimeMinutes(workingCopy.content)
       };
       if (!reporterDraftExists) {
         set.workingCopy = workingCopy;
@@ -152,7 +156,7 @@ async function deleteEditorArticle(id) {
     await session.withTransaction(async () => {
       const result = await Article.deleteOne({ _id: id, workflowStatus: { $ne: 'returned' } }, { session });
       if (!result.deletedCount) return;
-      await ArticleAnalytics.deleteOne({ article: id }, { session });
+      await Comment.deleteMany({ article: id }, { session });
       await ArticleViewBucket.deleteMany({ article: id }, { session });
       await ArticlePublicationEvent.deleteMany({ article: id }, { session });
       deleted = true;

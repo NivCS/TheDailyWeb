@@ -8,6 +8,5 @@ const articleViewBucketSchema = new mongoose.Schema({
 }, { versionKey: false, timestamps: false });
 
 articleViewBucketSchema.index({ article: 1, bucketStart: 1, shard: 1 }, { unique: true });
-articleViewBucketSchema.index({ article: 1, bucketStart: 1 });
 
 module.exports = mongoose.models.ArticleViewBucket || mongoose.model('ArticleViewBucket', articleViewBucketSchema);

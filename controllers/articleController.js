@@ -1,6 +1,6 @@
 const { listPublishedArticles, findPublishedArticle } = require('../data/articleStore');
 
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World'];
+const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
 
 async function list(req, res, next) {
   try {

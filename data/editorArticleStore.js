@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 const Article = require('../models/Article');
+const ArticleAnalytics = require('../models/ArticleAnalytics');
+const ArticleViewBucket = require('../models/ArticleViewBucket');
+const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
+const { recordPublicationEvent } = require('./analyticsStore');
 const { articleWorkflowStatus, publicVersion } = require('./reporterArticleStore');
 function validId(id) { return mongoose.isValidObjectId(id); }
 function pendingFilter(id) {
@@ -47,38 +51,85 @@ async function saveEditorChanges(id, workingCopy) {
   if (!validId(id)) return null;
   return Article.findOneAndUpdate(pendingFilter(id), { $set: { workingCopy } }, { new: true, runValidators: true }).lean();
 }
-async function approveEditorArticle(id, workingCopy) {
+async function approveEditorArticle(id, workingCopy, editorId) {
   if (!validId(id)) return null;
-  return Article.findOneAndUpdate(pendingFilter(id), { $set: {
-    title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
-    category: workingCopy.category, image: workingCopy.image, workingCopy,
-    status: 'published', approved: true, workflowStatus: 'published',
-    publishedAt: new Date(), reviewNote: ''
-  }, $unset: { submittedCopy: 1 } }, { new: true, runValidators: true }).lean();
+  const session = await mongoose.startSession();
+  const eventAt = new Date();
+  const eventKey = require('crypto').randomUUID();
+  let updated = null;
+
+  try {
+    await session.withTransaction(async () => {
+      const current = await Article.findOne(pendingFilter(id)).session(session).lean();
+      if (!current) return;
+      const article = await Article.findOneAndUpdate(
+        { ...pendingFilter(id), updatedAt: current.updatedAt },
+        { $set: {
+          title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
+          category: workingCopy.category, image: workingCopy.image, workingCopy,
+          status: 'published', approved: true, workflowStatus: 'published',
+          publishedAt: eventAt, reviewNote: ''
+        }, $unset: { submittedCopy: 1 } },
+        { new: true, runValidators: true, session }
+      ).lean();
+      if (!article) return;
+
+      const eventType = current.status === 'published' && current.approved ? 'update' : 'publication';
+      await recordPublicationEvent({
+        articleId: article._id, eventAt, eventType, editorId,
+        title: article.title, eventKey, session
+      });
+      updated = article;
+    });
+    return updated;
+  } finally {
+    await session.endSession();
+  }
 }
-async function savePublishedEditorChanges(id, workingCopy) {
+async function savePublishedEditorChanges(id, workingCopy, editorId) {
   if (!validId(id)) return null;
-  const article = await Article.findOneAndUpdate(
-    { _id: id, status: 'published', approved: true, workflowStatus: { $nin: ['pending', 'returned'] } },
-    { $set: {
-      title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
-      category: workingCopy.category, image: workingCopy.image, publishedAt: new Date()
-    } },
-    { new: true, runValidators: true }
-  ).lean();
-  if (!article) return null;
+  const session = await mongoose.startSession();
+  const eventAt = new Date();
+  const eventKey = require('crypto').randomUUID();
+  let updated = null;
 
-  // Keep an author's active draft separate from the editor's published revision.
-  const reporterDraftExists = ['draft', 'returned'].includes(article.workflowStatus) && article.workingCopy?.title;
-  if (reporterDraftExists) return article;
+  try {
+    await session.withTransaction(async () => {
+      const filter = {
+        _id: id, status: 'published', approved: true,
+        workflowStatus: { $nin: ['pending', 'returned'] }
+      };
+      const current = await Article.findOne(filter).session(session).lean();
+      if (!current) return;
 
-  return Article.findOneAndUpdate(
-    { _id: id, status: 'published', approved: true, workflowStatus: { $nin: ['pending', 'returned'] } },
-    { $set: { workingCopy, workflowStatus: 'published' } },
-    { new: true, runValidators: true }
-  ).lean();
+      const reporterDraftExists = ['draft', 'returned'].includes(current.workflowStatus) && current.workingCopy?.title;
+      const set = {
+        title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
+        category: workingCopy.category, image: workingCopy.image, publishedAt: eventAt
+      };
+      if (!reporterDraftExists) {
+        set.workingCopy = workingCopy;
+        set.workflowStatus = 'published';
+      }
+
+      const article = await Article.findOneAndUpdate(
+        { ...filter, updatedAt: current.updatedAt },
+        { $set: set },
+        { new: true, runValidators: true, session }
+      ).lean();
+      if (!article) return;
+
+      await recordPublicationEvent({
+        articleId: article._id, eventAt, eventType: 'update', editorId,
+        title: article.title, eventKey, session
+      });
+      updated = article;
+    });
+    return updated;
+  } finally {
+    await session.endSession();
+  }
 }
-
 async function returnEditorArticle(id, note) {
   if (!validId(id)) return null;
   const article = await Article.findOne(pendingFilter(id)).lean();
@@ -94,8 +145,22 @@ async function returnEditorArticle(id, note) {
 }
 async function deleteEditorArticle(id) {
   if (!validId(id)) return false;
-  const result = await Article.deleteOne({ _id: id, workflowStatus: { $ne: 'returned' } });
-  return result.deletedCount === 1;
+  const session = await mongoose.startSession();
+
+  try {
+    let deleted = false;
+    await session.withTransaction(async () => {
+      const result = await Article.deleteOne({ _id: id, workflowStatus: { $ne: 'returned' } }, { session });
+      if (!result.deletedCount) return;
+      await ArticleAnalytics.deleteOne({ article: id }, { session });
+      await ArticleViewBucket.deleteMany({ article: id }, { session });
+      await ArticlePublicationEvent.deleteMany({ article: id }, { session });
+      deleted = true;
+    });
+    return deleted;
+  } finally {
+    await session.endSession();
+  }
 }
 module.exports = {
   approveEditorArticle, deleteEditorArticle, findEditorArticle, listEditorArticles,

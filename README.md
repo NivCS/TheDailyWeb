@@ -26,19 +26,29 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 
 ## Project structure
 
-- `models/Article.js` — Mongoose article schema.
 - `models/Comment.js` and `models/CommentRateLimit.js` — comment and guest rate-limit schemas.
 - `models/Article.js` — article records, reporter ownership, editorial status, and separate working copies.
+- `models/ArticleAnalytics.js`, `models/ArticleViewBucket.js`, and `models/ArticlePublicationEvent.js` — readership baseline, hourly counters, and publication history.
 - `data/articleStore.js` — MongoDB article data access.
 - `data/reporterArticleStore.js` and `controllers/reporterController.js` — reporter ownership, draft autosave, and submission workflow.
 - `data/commentStore.js` — comment reads/writes and atomic guest rate-limit reservations.
 - `controllers/articleController.js` and `controllers/commentController.js` — request handling and input normalization.
 - `routes/articleRoutes.js` — REST endpoints for the public article list, article detail, and comments.
-- `routes/authRoutes.js` — protected reporter pages and draft/submission API endpoints.
+- `routes/authRoutes.js` — protected reporter/editor pages and workflow/analytics API endpoints.
+- `data/analyticsStore.js` and `controllers/analyticsController.js` — hourly readership recording and editor analytics queries.
+- `views/editor-analytics.ejs` and `public/js/editor-analytics.js` — editor chart and publication markers.
 - `views/home.ejs` — page template and shared navigation/footer.
 - `public/js/home.js` and `public/css/styles.css` — client-side feed behavior and responsive styling.
 
-The current milestone covers the public home page and read endpoints. The remaining role-specific workflows and create/update/delete operations can be added in later steps while extending the same MVC structure.
+The application follows an MVC-style structure: routes apply role checks, controllers handle HTTP requests, data stores encapsulate database operations, and Mongoose models define persisted records. Article creation, editing, review, publication, and deletion follow the reporter/editor workflow described below.
+
+## Impact analytics
+
+- Only editors can open `/editor/analytics` or its article analytics API. The page supports 24-hour, 7-day, 30-day, and 90-day ranges.
+- A successful request for a published article records one view in an hourly bucket. Each article-hour is split across eight counter shards so concurrent readers do not all write to one counter document.
+- The chart uses Chart.js with publication markers. New publication and approved-update events are written in the same MongoDB transaction as the article change.
+- Each article has one analytics record for the lifetime total carried into tracking and the tracking start time; hourly increments use the same eight-shard counter structure for every article. Article records do not store view counts. The chart shows cumulative lifetime totals over the selected time range, with publication and approved-update markers. Earlier hourly changes cannot be reconstructed from the previous lifetime-only counter.
+- For a fresh or updated environment, set `MONGODB_URI` and run `npm run migrate-analytics`. The migration is safe to rerun: it creates missing indexes and fills analytics records/events only when absent.
 
 ## Accounts and authentication
 

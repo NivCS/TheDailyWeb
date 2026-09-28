@@ -1,5 +1,11 @@
 (() => {
-  const articleSelect = document.getElementById('analytics-article');
+  const articleButton = document.getElementById('analytics-article-button');
+  const articlePicker = document.getElementById('analytics-article-picker');
+  const articleMenu = document.getElementById('analytics-article-menu');
+  const articleSearch = document.getElementById('analytics-article-search');
+  const noArticleResults = document.getElementById('analytics-article-no-results');
+  const articleLabel = document.getElementById('analytics-selected-article');
+  const articleOptions = [...document.querySelectorAll('.analytics-article-option')];
   const rangeSelect = document.getElementById('analytics-range');
   const status = document.getElementById('analytics-status');
   const canvas = document.getElementById('analytics-chart');
@@ -7,12 +13,14 @@
   const rangeViewCount = document.getElementById('analytics-range-views');
   const trackingStart = document.getElementById('analytics-tracking-start');
   const eventList = document.getElementById('publication-event-list');
-  if (!articleSelect || !rangeSelect || !canvas || !window.Chart || !articleSelect.value) return;
+  if (!articleButton || !articleSearch || !rangeSelect || !canvas || !window.Chart || !articleButton.dataset.articleId) return;
 
   const annotationPlugin = window['chartjs-plugin-annotation'];
   if (annotationPlugin) Chart.register(annotationPlugin);
   let chart;
   let activeRequest = 0;
+  let selectedArticleId = articleButton.dataset.articleId;
+  let hoveredUpdateAnnotationId = null;
   const numberFormat = new Intl.NumberFormat('en-US');
   const dateTimeFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const dateFormat = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -21,6 +29,77 @@
     status.textContent = message;
     status.classList.toggle('is-error', isError);
   }
+
+  function setPickerOpen(open, focusSearch = false) {
+    articleMenu.hidden = !open;
+    articleButton.setAttribute('aria-expanded', String(open));
+    if (open) {
+      articleSearch.value = '';
+      filterArticleOptions('');
+      if (focusSearch) articleSearch.focus();
+    }
+  }
+
+  function filterArticleOptions(query) {
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    let visibleCount = 0;
+    for (const option of articleOptions) {
+      const matches = option.textContent.trim().toLocaleLowerCase().includes(normalizedQuery);
+      option.hidden = !matches;
+      if (matches) visibleCount += 1;
+    }
+    noArticleResults.hidden = visibleCount > 0;
+  }
+
+  function selectArticle(option) {
+    selectedArticleId = option.dataset.articleId;
+    articleButton.dataset.articleId = selectedArticleId;
+    articleLabel.textContent = option.textContent.trim();
+    for (const item of articleOptions) {
+      const selected = item === option;
+      item.setAttribute('aria-selected', String(selected));
+      item.tabIndex = selected ? 0 : -1;
+    }
+    setPickerOpen(false);
+    loadAnalytics();
+    articleButton.focus();
+  }
+
+  articleButton.addEventListener('click', () => setPickerOpen(articleMenu.hidden, articleMenu.hidden));
+  articleSearch.addEventListener('input', () => filterArticleOptions(articleSearch.value));
+  articleSearch.addEventListener('keydown', (event) => {
+    const visibleOptions = articleOptions.filter((option) => !option.hidden);
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setPickerOpen(false);
+      articleButton.focus();
+    } else if (event.key === 'ArrowDown' && visibleOptions.length) {
+      event.preventDefault();
+      const selected = visibleOptions.find((option) => option.dataset.articleId === selectedArticleId);
+      (selected || visibleOptions[0]).focus();
+    }
+  });
+  articleOptions.forEach((option) => option.addEventListener('click', () => selectArticle(option)));
+  articleMenu.addEventListener('keydown', (event) => {
+    const visibleOptions = articleOptions.filter((option) => !option.hidden);
+    const current = visibleOptions.indexOf(document.activeElement);
+    let next = current;
+    if (event.key === 'ArrowDown' && visibleOptions.length) next = (current + 1 + visibleOptions.length) % visibleOptions.length;
+    else if (event.key === 'ArrowUp' && visibleOptions.length) next = (current - 1 + visibleOptions.length) % visibleOptions.length;
+    else if (event.key === 'Home' && visibleOptions.length) next = 0;
+    else if (event.key === 'End' && visibleOptions.length) next = visibleOptions.length - 1;
+    else if (event.key === 'Escape') {
+      event.preventDefault();
+      setPickerOpen(false);
+      articleButton.focus();
+      return;
+    } else return;
+    event.preventDefault();
+    visibleOptions[next]?.focus();
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!articlePicker.contains(event.target)) setPickerOpen(false);
+  });
 
   function eventLabel(type) {
     return type === 'update' ? 'Published update' : 'Publication';
@@ -53,12 +132,31 @@
   function makeAnnotations(events) {
     return Object.fromEntries(events.map((event, index) => {
       const position = Date.parse(event.eventAt);
-      return [`publication-${index}`, {
+      const isUpdate = event.eventType === 'update';
+      const color = isUpdate ? '#e86e55' : '#547d42';
+      const annotationId = `publication-${index}`;
+      const annotation = {
         type: 'line', xMin: position, xMax: position,
-        borderColor: event.eventType === 'update' ? '#e86e55' : '#547d42',
-        borderWidth: 2, borderDash: event.eventType === 'update' ? [6, 4] : [],
-        label: { display: true, content: eventLabel(event.eventType), position: 'start', backgroundColor: event.eventType === 'update' ? '#e86e55' : '#547d42', color: '#fff', font: { size: 10 }, padding: 5 }
-      }];
+        borderColor: color, borderWidth: isUpdate ? 2.5 : 2, borderDash: isUpdate ? [6, 4] : [],
+        label: {
+          display: isUpdate ? (context) => context.id === hoveredUpdateAnnotationId : true,
+          content: eventLabel(event.eventType), position: 'start', backgroundColor: color,
+          color: '#fff', font: { size: 10 }, padding: 5
+        }
+      };
+      if (isUpdate) {
+        annotation.enter = ({ chart: currentChart }) => {
+          hoveredUpdateAnnotationId = annotationId;
+          currentChart.canvas.style.cursor = 'pointer';
+          return true;
+        };
+        annotation.leave = ({ chart: currentChart }) => {
+          if (hoveredUpdateAnnotationId === annotationId) hoveredUpdateAnnotationId = null;
+          currentChart.canvas.style.cursor = '';
+          return true;
+        };
+      }
+      return [annotationId, annotation];
     }));
   }
 
@@ -105,9 +203,9 @@
 
   async function loadAnalytics() {
     const requestId = ++activeRequest;
-    setStatus('Loading readership data…');
+    setStatus('', false);
     try {
-      const url = `/editor/api/analytics/${encodeURIComponent(articleSelect.value)}?range=${encodeURIComponent(rangeSelect.value)}`;
+      const url = `/editor/api/analytics/${encodeURIComponent(selectedArticleId)}?range=${encodeURIComponent(rangeSelect.value)}`;
       const response = await fetch(url, { headers: { Accept: 'application/json' } });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not load this article’s analytics.');
@@ -118,7 +216,6 @@
       trackingStart.textContent = dateFormat.format(new Date(data.trackingStartedAt));
       renderChart(data);
       renderEvents(data.publicationEvents);
-      setStatus(`${data.article.title} · ${rangeSelect.options[rangeSelect.selectedIndex].text}`);
     } catch (error) {
       if (requestId !== activeRequest) return;
       if (chart) { chart.destroy(); chart = null; }
@@ -130,7 +227,6 @@
     }
   }
 
-  articleSelect.addEventListener('change', loadAnalytics);
   rangeSelect.addEventListener('change', loadAnalytics);
   loadAnalytics();
 })();

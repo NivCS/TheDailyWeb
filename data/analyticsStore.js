@@ -6,18 +6,19 @@ const ArticleViewBucket = require('../models/ArticleViewBucket');
 const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
 
 const HOUR_MS = 60 * 60 * 1000;
+const BUCKET_MS = 5 * 60 * 1000;
 const COUNTER_SHARDS = 8;
-const RANGE_HOURS = { '24h': 24, '7d': 168, '30d': 720, '90d': 2160 };
+const RANGE_HOURS = { '1h': 1, '24h': 24, '7d': 168, '30d': 720, '90d': 2160 };
 
-function hourStart(date) {
-  return new Date(Math.floor(date.getTime() / HOUR_MS) * HOUR_MS);
+function bucketStart(date) {
+  return new Date(Math.floor(date.getTime() / BUCKET_MS) * BUCKET_MS);
 }
 
 async function recordArticleView(articleId, viewedAt = new Date()) {
   if (!mongoose.isValidObjectId(articleId)) return false;
-  const bucket = hourStart(viewedAt);
+  const bucket = bucketStart(viewedAt);
   const shard = crypto.randomInt(COUNTER_SHARDS);
-  const filter = { article: articleId, hourStart: bucket, shard };
+  const filter = { article: articleId, bucketStart: bucket, shard };
 
   try {
     await ArticleViewBucket.updateOne(filter, { $inc: { views: 1 } }, { upsert: true });
@@ -54,24 +55,25 @@ async function getArticleAnalytics(articleId, range = '30d') {
   if (!article) return null;
 
   const now = new Date();
-  const currentHour = hourStart(now);
   const hours = RANGE_HOURS[range] || RANGE_HOURS['30d'];
-  const rangeStart = new Date(currentHour.getTime() - hours * HOUR_MS);
+  const rangeStart = new Date(now.getTime() - hours * HOUR_MS);
+  const bucketInterval = hours <= 24 ? BUCKET_MS : HOUR_MS;
   const analytics = await ArticleAnalytics.findOne({ article: article._id })
     .select('viewsAtTrackingStart trackingStartedAt')
     .lean();
   const trackingStartedAt = analytics?.trackingStartedAt || article.publishedAt;
   const graphStart = Math.max(rangeStart.getTime(), trackingStartedAt.getTime());
-  const firstHour = hourStart(new Date(graphStart));
+  const firstBucket = bucketStart(new Date(graphStart));
+  const firstPoint = new Date(Math.floor(graphStart / bucketInterval) * bucketInterval);
 
   const [priorRows, bucketRows, eventRows] = await Promise.all([
     ArticleViewBucket.aggregate([
-      { $match: { article: article._id, hourStart: { $lt: firstHour } } },
+      { $match: { article: article._id, bucketStart: { $lt: firstBucket } } },
       { $group: { _id: null, views: { $sum: '$views' } } }
     ]),
     ArticleViewBucket.aggregate([
-      { $match: { article: article._id, hourStart: { $gte: firstHour, $lte: currentHour } } },
-      { $group: { _id: '$hourStart', views: { $sum: '$views' } } },
+      { $match: { article: article._id, bucketStart: { $gte: firstBucket, $lt: now } } },
+      { $group: { _id: { $dateTrunc: { date: '$bucketStart', unit: hours <= 24 ? 'minute' : 'hour', ...(hours <= 24 ? { binSize: 5 } : {}) } }, views: { $sum: '$views' } } },
       { $sort: { _id: 1 } }
     ]),
     ArticlePublicationEvent.find({ article: article._id, eventAt: { $gte: new Date(graphStart), $lte: now } })
@@ -84,12 +86,12 @@ async function getArticleAnalytics(articleId, range = '30d') {
   let cumulativeViews = (analytics?.viewsAtTrackingStart || 0) + (priorRows[0]?.views || 0);
   const points = [{ at: new Date(graphStart).toISOString(), totalViews: cumulativeViews }];
   let rangeViews = 0;
-  for (let at = firstHour.getTime(); at <= currentHour.getTime(); at += HOUR_MS) {
+  for (let at = firstPoint.getTime(); at < now.getTime(); at += bucketInterval) {
     const views = countsByHour.get(at) || 0;
     cumulativeViews += views;
     rangeViews += views;
     points.push({
-      at: new Date(Math.min(at + HOUR_MS, now.getTime())).toISOString(),
+      at: new Date(Math.min(at + bucketInterval, now.getTime())).toISOString(),
       totalViews: cumulativeViews
     });
   }

@@ -44,10 +44,10 @@ The application follows an MVC-style structure: routes apply role checks, contro
 
 ## Impact analytics
 
-- Only editors can open `/editor/analytics` or its article analytics API. The page supports 24-hour, 7-day, 30-day, and 90-day ranges.
-- A successful request for a published article records one view in an hourly bucket. Each article-hour is split across eight counter shards so concurrent readers do not all write to one counter document.
+- Only editors can open `/editor/analytics` or its article analytics API. The page supports 1-hour, 24-hour, 7-day, 30-day, and 90-day ranges.
+- A successful request for a published article records one view in a five-minute bucket. Each article bucket is split across eight counter shards so concurrent readers do not all write to one counter document.
 - The chart uses Chart.js with publication markers. New publication and approved-update events are written in the same MongoDB transaction as the article change.
-- Each article has one analytics record for the lifetime total carried into tracking and the tracking start time; hourly increments use the same eight-shard counter structure for every article. Article records do not store view counts. The chart shows cumulative lifetime totals over the selected time range, with publication and approved-update markers. Earlier hourly changes cannot be reconstructed from the previous lifetime-only counter.
+- Each article has one analytics record for the lifetime total carried into tracking and the tracking start time; five-minute increments use the same eight-shard counter structure for every article; the chart groups longer periods into hourly points. Article records do not store view counts. The chart shows cumulative lifetime totals over the selected time range, with publication and approved-update markers. Earlier hourly changes cannot be reconstructed from the previous lifetime-only counter.
 - For a fresh or updated environment, set `MONGODB_URI` and run `npm run migrate-analytics`. The migration is safe to rerun: it creates missing indexes and fills analytics records/events only when absent.
 
 ## Accounts and authentication

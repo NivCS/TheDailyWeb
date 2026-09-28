@@ -1,25 +1,31 @@
 require('dotenv').config();
 
 const mongoose = require('mongoose');
+mongoose.set('autoIndex', false);
 const Article = require('../models/Article');
 const ArticleAnalytics = require('../models/ArticleAnalytics');
 const ArticleViewBucket = require('../models/ArticleViewBucket');
 const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
 
-const HOUR_MS = 60 * 60 * 1000;
-function hourStart(date) {
-  return new Date(Math.floor(date.getTime() / HOUR_MS) * HOUR_MS);
-}
-
 async function migrate() {
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required.');
-  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
-  await Promise.all([ArticleAnalytics.createIndexes(), ArticleViewBucket.createIndexes(), ArticlePublicationEvent.createIndexes()]);
+  await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000, autoIndex: false });
 
   const database = mongoose.connection.db;
   const analyticsCollection = database.collection(ArticleAnalytics.collection.name);
   const articleCollection = database.collection(Article.collection.name);
   const eventCollection = database.collection(ArticlePublicationEvent.collection.name);
+  const bucketCollection = database.collection(ArticleViewBucket.collection.name);
+  const bucketIndexes = await bucketCollection.indexes();
+  for (const index of bucketIndexes) {
+    if (index.name !== '_id_' && Object.prototype.hasOwnProperty.call(index.key, 'hourStart')) await bucketCollection.dropIndex(index.name);
+  }
+  await bucketCollection.updateMany(
+    { hourStart: { $exists: true }, bucketStart: { $exists: false } },
+    [{ $set: { bucketStart: '$hourStart' } }, { $unset: 'hourStart' }]
+  );
+  const remainingHourlyBuckets = await bucketCollection.countDocuments({ hourStart: { $exists: true } });
+  if (remainingHourlyBuckets) throw new Error('Bucket migration verification failed; hourStart fields remain.');
   const migrationAt = new Date();
   const articles = await articleCollection.find({}, {
     projection: { views: 1, status: 1, approved: 1, publishedAt: 1, title: 1, createdAt: 1 }
@@ -109,10 +115,13 @@ async function migrate() {
   const remainingOldEvents = await eventCollection.countDocuments({ eventType: { $in: ['legacy', 'initial'] } });
   if (remainingOldFields || remainingArticleViews || remainingOldEvents) throw new Error('Migration verification failed; old analytics fields or event types remain.');
 
+  await Promise.all([ArticleAnalytics.createIndexes(), ArticleViewBucket.createIndexes(), ArticlePublicationEvent.createIndexes()]);
+
   const totals = await analyticsCollection.aggregate([{ $group: { _id: null, totalViews: { $sum: '$viewsAtTrackingStart' } } }]).toArray();
   console.log('Analytics migration complete: ' + records + ' article analytics records; ' +
     (totals[0]?.totalViews || 0) + ' existing views carried forward; ' + eventOps.length +
-    ' publication dates; ' + removedArticleViews.modifiedCount + ' article counters removed; ' + remainingArticleViews + ' article view fields remain.');
+    ' publication dates; ' + removedArticleViews.modifiedCount + ' article counters removed; ' +
+    remainingArticleViews + ' article view fields remain; ' + remainingHourlyBuckets + ' old hourly bucket fields remain.');
 }
 
 migrate()

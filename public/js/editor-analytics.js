@@ -9,6 +9,15 @@
   const rangeSelect = document.getElementById('analytics-range');
   const status = document.getElementById('analytics-status');
   const canvas = document.getElementById('analytics-chart');
+  let updateHoverLabel = document.getElementById('analytics-update-hover-label');
+  if (!updateHoverLabel && canvas?.parentElement) {
+    updateHoverLabel = document.createElement('div');
+    updateHoverLabel.id = 'analytics-update-hover-label';
+    updateHoverLabel.className = 'analytics-hover-label';
+    updateHoverLabel.hidden = true;
+    updateHoverLabel.setAttribute('aria-hidden', 'true');
+    canvas.parentElement.append(updateHoverLabel);
+  }
   const totalViewCount = document.getElementById('analytics-total-views');
   const rangeViewCount = document.getElementById('analytics-range-views');
   const trackingStart = document.getElementById('analytics-tracking-start');
@@ -133,35 +142,67 @@
     return Object.fromEntries(events.map((event, index) => {
       const position = Date.parse(event.eventAt);
       const isUpdate = event.eventType === 'update';
-      const color = isUpdate ? '#e86e55' : '#547d42';
+      const color = '#e86e55';
       const annotationId = `publication-${index}`;
+      const eventDate = new Date(event.eventAt);
+      const labelLines = [
+        eventLabel(event.eventType),
+        dateTimeFormat.format(eventDate),
+        event.editor ? `by ${event.editor}` : ''
+      ];
       const annotation = {
         type: 'line', xMin: position, xMax: position,
         borderColor: color, borderWidth: isUpdate ? 2.5 : 2, borderDash: isUpdate ? [6, 4] : [],
+        hitTolerance: isUpdate ? 10 : 0,
         label: {
-          display: isUpdate ? (context) => context.id === hoveredUpdateAnnotationId : true,
-          content: eventLabel(event.eventType), position: 'start', backgroundColor: color,
+          display: !isUpdate,
+          content: labelLines, position: 'start', backgroundColor: color,
           color: '#fff', font: { size: 10 }, padding: 5
         }
       };
-      if (isUpdate) {
-        annotation.enter = ({ chart: currentChart }) => {
-          hoveredUpdateAnnotationId = annotationId;
-          currentChart.canvas.style.cursor = 'pointer';
-          return true;
-        };
-        annotation.leave = ({ chart: currentChart }) => {
-          if (hoveredUpdateAnnotationId === annotationId) hoveredUpdateAnnotationId = null;
-          currentChart.canvas.style.cursor = '';
-          return true;
-        };
-      }
       return [annotationId, annotation];
     }));
   }
 
+  function showUpdateHoverLabel(currentChart, marker) {
+    const eventDate = new Date(marker.event.eventAt);
+    updateHoverLabel.replaceChildren();
+    const title = document.createElement('strong');
+    const time = document.createElement('span');
+    const editor = document.createElement('span');
+    title.textContent = eventLabel(marker.event.eventType);
+    time.textContent = dateTimeFormat.format(eventDate);
+    editor.textContent = marker.event.editor ? `by ${marker.event.editor}` : 'Editor unavailable';
+    updateHoverLabel.append(title, time, editor);
+    updateHoverLabel.hidden = false;
+    updateHoverLabel.setAttribute('aria-hidden', 'false');
+
+    const canvasRect = currentChart.canvas.getBoundingClientRect();
+    const wrapper = currentChart.canvas.parentElement;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const scaleX = canvasRect.width / currentChart.width;
+    const scaleY = canvasRect.height / currentChart.height;
+    const markerX = canvasRect.left - wrapperRect.left + currentChart.scales.x.getPixelForValue(marker.position) * scaleX;
+    const markerTop = canvasRect.top - wrapperRect.top + currentChart.chartArea.top * scaleY + 8;
+    const labelWidth = updateHoverLabel.getBoundingClientRect().width;
+    let left = markerX + 8;
+    if (left + labelWidth > wrapperRect.width - 8) left = markerX - labelWidth - 8;
+    updateHoverLabel.style.left = `${Math.max(8, left)}px`;
+    updateHoverLabel.style.top = `${Math.max(8, markerTop)}px`;
+  }
+
+  function hideUpdateHoverLabel() {
+    updateHoverLabel.hidden = true;
+    updateHoverLabel.setAttribute('aria-hidden', 'true');
+  }
+
   function renderChart(data) {
     if (chart) chart.destroy();
+    hoveredUpdateAnnotationId = null;
+    const updateMarkers = data.publicationEvents
+      .map((event, index) => ({ id: `publication-${index}`, position: Date.parse(event.eventAt), event }))
+      .filter((marker) => marker.event.eventType === 'update');
+    const annotations = makeAnnotations(data.publicationEvents);
     chart = new Chart(canvas, {
       type: 'line',
       data: {
@@ -175,10 +216,37 @@
       options: {
         responsive: true, maintainAspectRatio: false, parsing: false,
         interaction: { mode: 'index', intersect: false },
+        onHover: (event, _activeElements, currentChart) => {
+          let nextHoveredId = null;
+          const area = currentChart.chartArea;
+          if (event.type !== 'mouseout' && area && event.x >= area.left && event.x <= area.right && event.y >= area.top && event.y <= area.bottom) {
+            let closestDistance = 11;
+            for (const marker of updateMarkers) {
+              const markerX = currentChart.scales.x.getPixelForValue(marker.position);
+              const distance = Math.abs(event.x - markerX);
+              if (distance <= 10 && distance < closestDistance) {
+                closestDistance = distance;
+                nextHoveredId = marker.id;
+              }
+            }
+          }
+          const hoveredMarker = updateMarkers.find((marker) => marker.id === nextHoveredId);
+          if (hoveredMarker) showUpdateHoverLabel(currentChart, hoveredMarker);
+          else hideUpdateHoverLabel();
+          if (nextHoveredId !== hoveredUpdateAnnotationId) {
+            hoveredUpdateAnnotationId = nextHoveredId;
+            currentChart.canvas.style.cursor = nextHoveredId ? 'pointer' : '';
+            if (nextHoveredId) {
+              currentChart.tooltip.setActiveElements([], { x: event.x, y: event.y });
+              currentChart.update('none');
+            }
+          }
+        },
         plugins: {
           legend: { display: false },
-          annotation: { annotations: makeAnnotations(data.publicationEvents) },
+          annotation: { annotations },
           tooltip: {
+            filter: () => hoveredUpdateAnnotationId === null,
             callbacks: {
               title: (items) => items.length ? dateTimeFormat.format(new Date(items[0].parsed.x)) : '',
               label: (item) => `${numberFormat.format(item.parsed.y)} total views`

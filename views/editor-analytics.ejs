@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/styles.css?v=analytics-3">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=analytics-7">
   <script defer src="/vendor/chart.js/chart.umd.min.js"></script>
   <script defer src="/vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js"></script>
-  <script defer src="/assets/js/editor-analytics.js?v=3"></script>
+  <script defer src="/assets/js/editor-analytics.js?v=9"></script>
 </head>
 <body>
   <%- include('partials/siteHeader', { currentUser, activeNav }) %>
@@ -75,12 +75,14 @@
       <div class="analytics-panel-heading">
         <div><p class="eyebrow"><span class="eyebrow-line"></span> Cumulative views</p><h2 id="analytics-chart-heading">Total views over time</h2></div>
         <div class="analytics-legend" aria-label="Chart legend">
-          <span class="analytics-event-key"><i class="analytics-publication-key" aria-hidden="true"></i> Number of views</span>
-          <span class="analytics-event-key"><i class="analytics-update-key" aria-hidden="true"></i> Approved update</span>
+          <span class="analytics-event-key"><i class="analytics-views-key" aria-hidden="true"></i> Number of views</span>
+          <span class="analytics-event-key"><i class="analytics-publication-key" aria-hidden="true"></i> Initial publication</span>
+          <span class="analytics-event-key"><i class="analytics-update-key" aria-hidden="true"></i> Approved updates</span>
         </div>
       </div>
       <div class="analytics-chart-wrap">
         <canvas id="analytics-chart" role="img" aria-label="Cumulative article views. Vertical markers identify publication and update times."></canvas>
+        <div class="analytics-hover-label" id="analytics-update-hover-label" aria-hidden="true" hidden></div>
       </div>
     </section>
 

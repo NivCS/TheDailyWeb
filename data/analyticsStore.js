@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 const Article = require('../models/Article');
-const ArticleAnalytics = require('../models/ArticleAnalytics');
 const ArticleViewBucket = require('../models/ArticleViewBucket');
 const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
 
@@ -20,21 +19,29 @@ async function recordArticleView(articleId, viewedAt = new Date()) {
   const shard = crypto.randomInt(COUNTER_SHARDS);
   const filter = { article: articleId, bucketStart: bucket, shard };
 
-  try {
-    await ArticleViewBucket.updateOne(filter, { $inc: { views: 1 } }, { upsert: true });
-  } catch (error) {
-    if (error.code !== 11000) throw error;
-    await ArticleViewBucket.updateOne(filter, { $inc: { views: 1 } });
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const session = await mongoose.startSession();
+    let totalViews = false;
+    try {
+      await session.withTransaction(async () => {
+        const article = await Article.findByIdAndUpdate(
+          articleId, { $inc: { views: 1 } }, { new: true, session }
+        ).select('views').lean();
+        if (!article) return;
+        await ArticleViewBucket.updateOne(filter, { $inc: { views: 1 } }, { upsert: true, session });
+        totalViews = article.views;
+      });
+      return totalViews;
+    } catch (error) {
+      if (error.code !== 11000 || attempt > 0) throw error;
+    } finally {
+      await session.endSession();
+    }
   }
-  return true;
+  return false;
 }
 
 async function recordPublicationEvent({ articleId, eventAt, eventType, editorId, title, eventKey, session }) {
-  await ArticleAnalytics.updateOne(
-    { article: articleId },
-    { $setOnInsert: { article: articleId, viewsAtTrackingStart: 0, trackingStartedAt: eventAt } },
-    { upsert: true, session }
-  );
   await ArticlePublicationEvent.create([{
     article: articleId, eventAt, eventType, editor: editorId, articleTitle: title, eventKey
   }], { session });
@@ -42,7 +49,7 @@ async function recordPublicationEvent({ articleId, eventAt, eventType, editorId,
 
 async function listAnalyticsArticles() {
   return Article.find({ status: 'published', approved: true })
-    .select('_id title author publishedAt')
+    .select('_id title author publishedAt views')
     .sort({ title: 1 })
     .lean();
 }
@@ -50,7 +57,7 @@ async function listAnalyticsArticles() {
 async function getArticleAnalytics(articleId, range = '30d') {
   if (!mongoose.isValidObjectId(articleId)) return null;
   const article = await Article.findOne({ _id: articleId, status: 'published', approved: true })
-    .select('_id title author publishedAt')
+    .select('_id title author publishedAt views')
     .lean();
   if (!article) return null;
 
@@ -58,10 +65,7 @@ async function getArticleAnalytics(articleId, range = '30d') {
   const hours = RANGE_HOURS[range] || RANGE_HOURS['30d'];
   const rangeStart = new Date(now.getTime() - hours * HOUR_MS);
   const bucketInterval = hours <= 24 ? BUCKET_MS : HOUR_MS;
-  const analytics = await ArticleAnalytics.findOne({ article: article._id })
-    .select('viewsAtTrackingStart trackingStartedAt')
-    .lean();
-  const trackingStartedAt = analytics?.trackingStartedAt || article.publishedAt;
+  const trackingStartedAt = article.publishedAt;
   const graphStart = Math.max(rangeStart.getTime(), trackingStartedAt.getTime());
   const firstBucket = bucketStart(new Date(graphStart));
   const firstPoint = new Date(Math.floor(graphStart / bucketInterval) * bucketInterval);
@@ -83,7 +87,7 @@ async function getArticleAnalytics(articleId, range = '30d') {
   ]);
 
   const countsByHour = new Map(bucketRows.map((row) => [row._id.getTime(), row.views]));
-  let cumulativeViews = (analytics?.viewsAtTrackingStart || 0) + (priorRows[0]?.views || 0);
+  let cumulativeViews = priorRows[0]?.views || 0;
   const points = [{ at: new Date(graphStart).toISOString(), totalViews: cumulativeViews }];
   let rangeViews = 0;
   for (let at = firstPoint.getTime(); at < now.getTime(); at += bucketInterval) {
@@ -109,7 +113,7 @@ async function getArticleAnalytics(articleId, range = '30d') {
     rangeStart: rangeStart.toISOString(),
     rangeEnd: now.toISOString(),
     trackingStartedAt: trackingStartedAt.toISOString(),
-    totalViews: cumulativeViews,
+    totalViews: article.views || 0,
     rangeViews,
     points,
     publicationEvents

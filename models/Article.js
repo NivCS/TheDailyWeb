@@ -10,13 +10,20 @@ const workingCopySchema = new mongoose.Schema({
 
 const articleSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
-  slug: { type: String, required: true, unique: true, index: true },
+  slug: { type: String, required: true, unique: true },
   excerpt: { type: String, default: '', trim: true },
   content: { type: [String], required: true },
   category: { type: String, required: true, index: true },
   author: { type: String, required: true },
   image: { type: String, default: '' },
-  publishedAt: { type: Date, required: true, index: true },
+  publishedAt: {
+    type: Date,
+    default: null,
+    required: function requirePublishedDate() { return this.status === 'published' && this.approved; },
+    index: true
+  },
+  readingTimeMinutes: { type: Number, required: true, min: 1, default: 1 },
+  views: { type: Number, required: true, min: 0, default: 0 },
   // `status` and `approved` describe the public version; workflowStatus tracks the reporter's current working copy.
   status: { type: String, enum: ['draft', 'pending', 'published'], default: 'draft', index: true },
   approved: { type: Boolean, default: false, index: true },

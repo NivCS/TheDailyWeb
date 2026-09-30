@@ -1,7 +1,8 @@
 const { listPublishedArticles, findPublishedArticle } = require('../data/articleStore');
+const { listArticleComments } = require('../data/commentStore');
 const { recordArticleView } = require('../data/analyticsStore');
 
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
+const categories = require('../config/articleCategories');
 
 async function list(req, res, next) {
   try {
@@ -29,8 +30,8 @@ async function detail(req, res, next) {
     const article = await findPublishedArticle(req.params.id);
     if (!article) return res.status(404).json({ error: 'This story could not be found.' });
     try {
-      await recordArticleView(article._id);
-      article.views = Number(article.views || 0) + 1;
+      const totalViews = await recordArticleView(article._id);
+      if (totalViews !== false) article.views = totalViews;
     } catch (analyticsError) {
       console.error('Could not record article view:', analyticsError.message);
     }
@@ -40,4 +41,27 @@ async function detail(req, res, next) {
   }
 }
 
-module.exports = { list, detail };
+async function renderDetailPage(req, res, next) {
+  try {
+    const article = await findPublishedArticle(req.params.slug);
+    if (!article) return res.status(404).render('article-not-found', { pageTitle: 'Story not found | The Daily Web', currentUser: req.user, activeNav: 'home' });
+    try {
+      const totalViews = await recordArticleView(article._id);
+      if (totalViews !== false) article.views = totalViews;
+    } catch (analyticsError) {
+      console.error('Could not record article view:', analyticsError.message);
+    }
+    const comments = await listArticleComments(article._id);
+    res.render('article', {
+      pageTitle: `${article.title} | The Daily Web`,
+      currentUser: req.user,
+      activeNav: 'home',
+      article,
+      comments
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { list, detail, renderDetailPage };

@@ -59,13 +59,16 @@ async function main() {
   if (!/^[a-z0-9._-]{3,30}$/.test(username)) throw new Error('Username format is invalid.');
   const role = (await ask('Role (reporter/editor): ')).trim().toLowerCase();
   if (!['reporter', 'editor'].includes(role)) throw new Error('Role must be reporter or editor.');
+  const requestedDisplayName = (await ask('Display name (leave blank to use the username): ')).trim();
+  const displayName = requestedDisplayName || username.split(/[._-]+/).filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
   rl.close();
   const password = await askSecret('Password (at least 10 characters): ');
   if (password.length < 10 || password.length > 200) throw new Error('Password must contain 10 to 200 characters.');
   const confirmation = await askSecret('Confirm password: ');
   if (password !== confirmation) throw new Error('Passwords do not match.');
 
-  await User.create({ username, role, passwordHash: await hashPassword(password) });
+  await User.create({ username, displayName, role, passwordHash: await hashPassword(password) });
   console.log(`Created ${role} account "${username}".`);
 }
 

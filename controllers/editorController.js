@@ -2,7 +2,7 @@ const {
   approveEditorArticle, deleteEditorArticle, findEditorArticle, listEditorArticles,
   returnEditorArticle, saveEditorChanges, savePublishedEditorChanges
 } = require('../data/editorArticleStore');
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
+const categories = require('../config/articleCategories');
 const statuses = ['draft', 'pending', 'returned', 'published'];
 const labels = { draft: 'In preparation', pending: 'Awaiting editor approval', returned: 'Returned for revisions', published: 'Published' };
 function editorHome(req, res) { res.redirect('/editor/articles?status=pending'); }
@@ -41,6 +41,7 @@ async function editorReviewPage(req, res, next) {
         ? { title: article.title, excerpt: article.excerpt, content: article.content, category: article.category, image: article.image }
         : article.workingCopy,
       canEdit: article.workflowStatus === 'pending' || (article.hasPublicVersion && article.workflowStatus !== 'returned'),
+      categories,
       activeNav: 'editor',
       workflowLabel: article.workflowStatus === 'pending' && article.hasPublicVersion
         ? 'Update awaiting approval' : labels[article.workflowStatus] || 'In preparation'

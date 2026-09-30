@@ -1,0 +1,15 @@
+<section class="weather-widget" data-weather-widget aria-labelledby="weather-title">
+  <div class="weather-widget-kicker"><span class="weather-live-dot" aria-hidden="true"></span> Local weather</div>
+  <div class="weather-widget-location"><div><h2 id="weather-title">Tel Aviv</h2><p>Israel</p></div><span class="weather-icon" data-weather-icon aria-hidden="true">◌</span></div>
+  <div class="weather-reading"><strong data-weather-temperature>--</strong><span>°C</span></div>
+  <p class="weather-condition" data-weather-condition role="status" aria-live="polite">Loading current weather…</p>
+  <div class="weather-range"><span>Today</span><strong><span data-weather-high>--</span>° <i aria-hidden="true">/</i> <span data-weather-low>--</span>°</strong></div>
+  <div class="weather-details">
+    <div><span>Feels like</span><strong><span data-weather-feels>--</span>°</strong></div>
+    <div><span>Humidity</span><strong><span data-weather-humidity>--</span>%</strong></div>
+    <div><span>Wind</span><strong><span data-weather-wind>--</span> km/h</strong></div>
+  </div>
+  <div class="weather-widget-footer"><span data-weather-updated>Waiting for update</span></div>
+  <button class="weather-retry" type="button" data-weather-retry hidden>Try again</button>
+</section>
+<script defer src="/assets/js/weather.js?v=2"></script>

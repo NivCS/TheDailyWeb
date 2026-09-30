@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const articleRoutes = require('./routes/articleRoutes');
+const weatherRoutes = require('./routes/weatherRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { loadUser } = require('./middleware/authentication');
 const { renderDetailPage } = require('./controllers/articleController');
@@ -24,6 +25,7 @@ app.use(loadUser);
 app.use(authRoutes);
 app.get('/article/:slug', renderDetailPage);
 app.use('/api/articles', articleRoutes);
+app.use('/api/weather', weatherRoutes);
 
 app.get('*', (req, res) => {
   res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home', categories });

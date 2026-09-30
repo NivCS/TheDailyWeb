@@ -23,7 +23,16 @@
       <a href="/?category=Other" class="nav-link" data-category-link="Other">Other</a>
     <% } %>
   </nav>
-  <% if (currentUser) { %>
+  <div class="header-tools">
+    <div class="weather-menu">
+      <button class="weather-menu-toggle" id="weather-menu-toggle" type="button" aria-label="Open local weather" aria-expanded="false" aria-controls="weather-dropdown">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="9" r="3.5"></circle><path d="M9 1.5v2M9 14.5v2M1.5 9h2M14.5 9h2M3.7 3.7l1.4 1.4M12.9 12.9l1.4 1.4M14.3 3.7l-1.4 1.4"></path><path d="M7.2 19h10.2a3.1 3.1 0 0 0 .2-6.2 4.8 4.8 0 0 0-9-1A3.7 3.7 0 0 0 7.2 19Z"></path></svg>
+      </button>
+      <div class="weather-dropdown" id="weather-dropdown" role="region" aria-label="Local weather" hidden>
+        <%- include('weatherWidget') %>
+      </div>
+    </div>
+    <% if (currentUser) { %>
     <div class="account-menu">
       <button class="header-action account-menu-toggle" id="account-menu-toggle" type="button" aria-label="Open account menu for <%= currentUser.username %>" aria-expanded="false" aria-controls="account-dropdown">
         <span class="account-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19c.55-3.25 2.9-5 6.5-5s5.95 1.75 6.5 5"></path></svg></span>
@@ -52,7 +61,8 @@
   <% } else { %>
     <a class="header-action sign-in-action" href="/login">Sign in <span aria-hidden="true">↗</span></a>
   <% } %>
+  </div>
   <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
 </header>
-<script defer src="/assets/js/header.js?v=2"></script>
+<script defer src="/assets/js/header.js?v=3"></script>
 <script defer src="/assets/js/site-dialog.js?v=1"></script>

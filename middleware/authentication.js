@@ -30,10 +30,13 @@ async function loadUser(req, res, next) {
     if (!/^[a-f0-9]{64}$/i.test(token)) return next();
 
     const session = await Session.findOne({ tokenHash: tokenDigest(token), expiresAt: { $gt: new Date() } })
-      .populate('user', 'username role')
+      .populate('user', 'username displayName role')
       .lean();
     if (session?.user) {
-      req.user = { id: String(session.user._id), username: session.user.username, role: session.user.role };
+      req.user = {
+        id: String(session.user._id), username: session.user.username,
+        displayName: session.user.displayName || session.user.username, role: session.user.role
+      };
     } else if (token) {
       clearSessionCookie(res);
     }

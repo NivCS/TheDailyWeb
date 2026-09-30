@@ -2,7 +2,7 @@ const { listPublishedArticles, findPublishedArticle } = require('../data/article
 const { listArticleComments } = require('../data/commentStore');
 const { recordArticleView } = require('../data/analyticsStore');
 
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
+const categories = require('../config/articleCategories');
 
 async function list(req, res, next) {
   try {

@@ -10,7 +10,7 @@ const {
   submitReporterArticle
 } = require('../data/reporterArticleStore');
 
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
+const categories = require('../config/articleCategories');
 const workflowLabels = {
   draft: 'In preparation',
   pending: 'Awaiting editor approval',
@@ -40,7 +40,7 @@ function reporterArticlesPage(req, res, next) {
 
 async function createArticle(req, res, next) {
   try {
-    const article = await createReporterArticle(req.user.id, req.user.username);
+    const article = await createReporterArticle(req.user.id, req.user.displayName || req.user.username);
     res.redirect(`/reporter/articles/${article._id}/edit`);
   } catch (error) {
     next(error);
@@ -55,6 +55,7 @@ async function editArticlePage(req, res, next) {
       pageTitle: 'Edit article | The Daily Web',
       currentUser: req.user,
       articleId: String(article._id),
+      categories,
       reviewNote: article.workflowStatus === 'returned' ? article.reviewNote : '',
       isPublished: article.status === 'published' && article.approved,
       articleStatus: articleWorkflowStatus(article),

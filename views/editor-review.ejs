@@ -22,7 +22,7 @@
 <form id="editor-working-copy">
 <label for="editor-title">Headline</label><input id="editor-title" maxlength="160" value="<%= proposed.title %>" <%= canEdit ? '' : 'disabled' %>>
 <label for="editor-excerpt">Summary</label><textarea id="editor-excerpt" maxlength="500" rows="3" <%= canEdit ? '' : 'disabled' %>><%= proposed.excerpt %></textarea>
-<label for="editor-category">Category</label><select id="editor-category" <%= canEdit ? '' : 'disabled' %>><% ['World', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'Science', 'Other'].forEach((category) => { %><option value="<%= category %>" <%= proposed.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select>
+<label for="editor-category">Category</label><select id="editor-category" <%= canEdit ? '' : 'disabled' %>><% categories.forEach((category) => { %><option value="<%= category %>" <%= proposed.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select>
 <label for="editor-image">Main image URL</label><input id="editor-image" maxlength="1000" value="<%= proposed.image %>" <%= canEdit ? '' : 'disabled' %>>
 <label for="editor-content">Article body</label><textarea id="editor-content" rows="14" <%= canEdit ? '' : 'disabled' %>><%= (proposed.content || []).join('\n') %></textarea>
 <% if (article.workflowStatus === 'pending') { %><div class="editor-review-actions"><button id="save-editor-changes" class="reporter-secondary-link" type="button">Save edits</button><button id="approve-editor-article" class="reporter-submit-button" type="button">Approve and publish <span aria-hidden="true">→</span></button></div>

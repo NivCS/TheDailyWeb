@@ -13,6 +13,7 @@ const Comment = require('../models/Comment');
 const User = require('../models/User');
 const { hashPassword } = require('../services/passwords');
 const { estimateReadingTimeMinutes } = require('../services/readingTime');
+const DEMO_IMAGE_IDS = require('../data/demoImageIds.json');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BUCKET_MS = 5 * 60 * 1000;
@@ -104,15 +105,69 @@ const HEADLINE_ANGLES = [
   'New data sharpens debate over', 'Communities test a fresh approach to',
   'A regional review puts', 'The next phase begins for', 'Residents weigh new options for'
 ];
-const IMAGES = [
-  'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1400&q=82',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=82'
+const REVISION_HEADLINE_ANGLES = [
+  'The revised plan for', 'A closer look at', 'What happens next for', 'New questions about',
+  'How the proposal could reshape', 'Behind the plan for', 'A fresh update on', 'The case for rethinking'
+];
+const EXCERPT_STYLES = [
+  (topic, detail) => `${topic[1]} is considering ${topic[3]} after ${topic[2]}. The first review will focus on ${detail}.`,
+  (topic, detail) => `A proposal for ${topic[1]} would test ${topic[3]}. Its progress will depend on ${topic[5]}, with ${detail} on the schedule.`,
+  (topic, detail) => `Local teams are weighing a response to ${topic[2]}. The plan pairs ${topic[3]} with ${detail}, while ${topic[5]} remains unresolved.`,
+  (topic, detail) => `${topic[3]} is moving into a planning phase in ${topic[1]}. Organizers want to learn whether ${detail} can address ${topic[2]}.`,
+  (topic, detail) => `The debate in ${topic[1]} centers on how to respond to ${topic[2]}. A proposed ${topic[3]} will be assessed through ${detail}.`,
+  (topic, detail) => `A local test could change how ${topic[1]} handles ${topic[0].toLowerCase()}. The next decision follows ${detail} and a review of ${topic[5]}.`,
+  (topic, detail) => `Residents and service providers are examining ${topic[3]} in response to ${topic[2]}. The work starts with ${detail}.`,
+  (topic, detail) => `${topic[1]} is testing a new approach to ${topic[0].toLowerCase()}. Early reporting will track ${detail} before leaders decide whether to continue.`
+];
+const OPENING_STYLES = [
+  (t) => `In ${t[1]}, ${t[2]}. ${t[0]} is moving from discussion to a time-limited test centered on ${t[3]}. Residents and operators have been asked to assess whether it fits local needs.`,
+  (t) => `Officials in ${t[1]} are considering ${t[3]} after reports that ${t[2]}. The plan would begin at a small number of sites before any decision on wider use.`,
+  (t) => `A proposed response to ${t[2]} is taking shape in ${t[1]}, where planners are advancing ${t[3]}. The next stage will test how well the idea works in everyday conditions.`,
+  (t) => `For groups working on ${t[0].toLowerCase()}, the immediate question is whether ${t[3]} can address the problems reported in ${t[1]}. Organizers say the test is meant to produce evidence before a wider commitment.`,
+  (t) => `New planning for ${t[1]} centers on ${t[3]}. It follows concerns that ${t[2]} and shifts attention toward service details residents can evaluate directly.`,
+  (t) => `A local review in ${t[1]} is comparing options for ${t[0].toLowerCase()}. The current proposal responds to ${t[2]}, but its reach will depend on staffing and local support.`,
+  (t) => `Residents and service providers in ${t[1]} are being asked to test a different response to ${t[2]}. The work focuses on ${t[3]} and includes a review before the program can expand.`,
+  (t) => `After months of discussion, teams in ${t[1]} are preparing ${t[3]}. The decision follows a familiar gap: ${t[2]}. Organizers say the first phase will be judged on service quality as well as participation.`
+];
+const REPORTING_DETAILS = [
+  (t, n, months) => `The initial plan covers about ${n} locations, service points, or participating groups, depending on the project. Organizers expect a review after ${months} months; these are planning figures, not final results.`,
+  (t, n, months) => `Staff will track how many people use the service, where delays occur, and what support teams need. A check-in is planned within ${months} months, with the first phase limited to roughly ${n} sites or groups.`,
+  (t, n, months) => `The rollout is deliberately narrow. Teams expect to begin with ${n} participating sites or groups and compare their experience over ${months} months before recommending any expansion.`,
+  (t, n, months) => `A working group is preparing a baseline for the first ${n} locations or participants. The comparison period is expected to last ${months} months, although the schedule may change as local partners join.`,
+  (t, n, months) => `Organizers plan to publish a progress note within ${months} months. It will include participation, staffing, and operating issues from an initial group of about ${n} sites or partners.`,
+  (t, n, months) => `The practical test will follow a small group of about ${n} sites or participants. Teams will use the next ${months} months to record service gaps and adjust the process where needed.`,
+  (t, n, months) => `Rather than launch everywhere at once, the project will compare results across about ${n} sites or groups. Partners expect the first review in ${months} months and say the measure will include reliability as well as reach.`,
+  (t, n, months) => `Local teams will collect feedback during a ${months}-month trial involving roughly ${n} service points or participating groups. The figures may shift as access and staffing are confirmed.`
+];
+const COMMUNITY_DETAILS = [
+  (t) => `In ${t[1]}, ${t[4]}. Those plans are intended to make the service easier to assess, though residents have asked for clear ways to report problems.`,
+  (t) => `The proposal depends on local partners. ${t[4]}. Their experience will help show whether the plan works outside the initial test sites.`,
+  (t) => `The next phase will rely on people who use and operate the service. ${t[4]}. Organizers say their feedback will be recorded alongside headline measures.`,
+  (t) => `Local conditions could shape the result as much as the design. ${t[4]}. The project team says it will publish both successful approaches and obstacles.`,
+  (t) => `Residents will be invited to compare the plan with current services. ${t[4]}. That feedback is expected to influence the final schedule and any changes to the pilot.`,
+  (t) => `The work also requires coordination among groups that do not usually share day-to-day decisions. ${t[4]}. Organizers are mapping responsibilities before the test begins.`,
+  (t) => `People affected by the change have asked to see how decisions are made. ${t[4]}. The team says it will publish a plain-language summary after the first review.`,
+  (t) => `Partners are preparing practical guidance for the first phase. ${t[4]}. The details matter because staffing, access, and maintenance differ between locations.`
+];
+const UNCERTAINTY_DETAILS = [
+  (t) => `The main uncertainty is whether ${t[5]}. Officials have not treated the pilot as proof that the same model would work in every neighborhood.`,
+  (t) => `One unresolved issue is ${t[5]}. The project will need to show who is responsible for ongoing costs before leaders consider making it permanent.`,
+  (t) => `The proposal still has an open question: ${t[5]}. Organizers say they will compare the benefits with the staff time and upkeep required.`,
+  (t) => `Local groups have raised concerns about whether ${t[5]}. The review is expected to describe trade-offs as well as progress.`,
+  (t) => `A decision will depend partly on ${t[5]}. Until those details are clearer, officials say the work remains a trial rather than a settled policy.`,
+  (t) => `The schedule could be affected by ${t[5]}. Partners are documenting the constraint now so it can be weighed against the expected benefits.`,
+  (t) => `It is not yet clear how teams will resolve ${t[5]}. The first report is expected to identify which parts of the plan need a different approach.`,
+  (t) => `Whether the plan can continue may hinge on ${t[5]}. Organizers say cost, access, and local feedback will all be considered before a next phase.`
+];
+const NEXT_STEPS = [
+  (t, month) => `The next public update is expected in about ${month} months. It should set out what changed, what did not work, and whether partners recommend continuing ${t[0].toLowerCase()}.`,
+  (t, month) => `Teams plan to publish their first findings in roughly ${month} months. Any wider rollout would follow a review of participation, reliability, and recurring responsibilities.`,
+  (t, month) => `A decision point is expected within ${month} months. Before then, organizers will share a progress summary and explain how community feedback affected the plan.`,
+  (t, month) => `The next step is a public review, planned for about ${month} months from now. Leaders say they will consider both the measured results and the effort required to sustain the service.`,
+  (t, month) => `Over the next ${month} months, the project team expects to publish its schedule and early findings. A permanent commitment will depend on what the review shows.`,
+  (t, month) => `Organizers expect to revisit the proposal after ${month} months of operation. The report will describe where the approach helped and where a different response may be needed.`,
+  (t, month) => `The public will receive another progress note in approximately ${month} months. Officials say any extension should be based on documented results rather than the initial plan alone.`,
+  (t, month) => `Partners are preparing a follow-up review for the coming ${month} months. Its findings will help determine whether the work should continue, change direction, or end.`
 ];
 const COMMENT_NAMES = ['Ari', 'Dana', 'Mina', 'Eli', 'Noa', 'Sam', 'Ruth', 'Talia', 'Jordan', 'Lee', 'Guest reader', 'Maya'];
 const COMMENT_TEXTS = [
@@ -126,10 +181,10 @@ const COMMENT_TEXTS = [
   'I would like to know how people can share feedback while the trial is running.'
 ];
 const REPORTER_ACCOUNTS = [
-  { username: 'reporter.demo', displayName: 'Maya Levin' },
-  { username: 'reporter.jordan', displayName: 'Jordan Hale' },
-  { username: 'reporter.noa', displayName: 'Noa Ben-Ami' },
-  { username: 'reporter.sam', displayName: 'Sam Rivera' }
+  'reporter.demo',
+  'reporter.jordan',
+  'reporter.noa',
+  'reporter.sam'
 ];
 const EDITOR_USERNAME = 'editor.demo';
 
@@ -140,6 +195,22 @@ function random() {
 }
 function randomInt(min, max) { return min + Math.floor(random() * (max - min + 1)); }
 function pick(items) { return items[randomInt(0, items.length - 1)]; }
+function stableInt(index, salt, min, max) {
+  let value = Math.imul(index + 1, 0x45d9f3b) ^ Math.imul(salt + 1, 0x27d4eb2d);
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  value = Math.imul(value ^ (value >>> 16), 0x45d9f3b);
+  value ^= value >>> 16;
+  return min + ((value >>> 0) % (max - min + 1));
+}
+function imageFor(index) {
+  const id = DEMO_IMAGE_IDS[index];
+  if (!id) throw new Error(`Missing demo image ID for fixture ${index}.`);
+  return `https://picsum.photos/id/${id}/1400/900`;
+}
+function revisionImageFor(index) {
+  const offset = index < 425 ? 500 + Math.floor((index - 385) / 5) : 508 + (index - 465);
+  return imageFor(offset);
+}
 function dateDaysAgo(days, hour = randomInt(6, 21), minute = randomInt(0, 59)) {
   const date = new Date(Date.now() - days * DAY_MS);
   date.setHours(hour, Math.floor(minute / 5) * 5, 0, 0);
@@ -151,34 +222,51 @@ function slugify(text, index) {
   return `${slug}-${String(index + 1).padStart(3, '0')}`;
 }
 function storyFor(index) {
-  const category = CATEGORIES[Math.floor(index / (8 * 8))];
-  const categoryIndex = Math.floor(index / 8) % category.topics.length;
-  const topic = category.topics[categoryIndex];
+  const categoryIndex = Math.floor(index / (8 * 8)) % CATEGORIES.length;
+  const category = CATEGORIES[categoryIndex];
+  const topicIndex = Math.floor(index / 8) % category.topics.length;
+  const topic = category.topics[topicIndex];
   const angle = HEADLINE_ANGLES[index % HEADLINE_ANGLES.length];
   const title = `${angle} ${topic[0]} in ${topic[1]}`;
-  const signal = randomInt(8, 47);
-  const year = new Date().getFullYear();
-  const excerpt = `${topic[2].charAt(0).toUpperCase()}${topic[2].slice(1)}. The latest plan centers on ${topic[3]}, while local teams consider whether ${topic[5]}.`;
-  const paragraphs = [
-    `A new phase of ${topic[0].toLowerCase()} is taking shape in ${topic[1]}, where ${topic[2]}. The proposal brings together residents, service providers, and local officials around ${topic[3]}. Organizers say the immediate goal is to establish a workable process and publish results that can be checked over time. The first round is designed to surface practical problems before any wider commitment is made.`,
-    `Early planning documents point to a measured rollout rather than a region-wide launch. Teams are reviewing a baseline of about ${signal} locations, service points, or participating groups, depending on the needs of each site. That number is a planning estimate, not a final outcome. Staff expect the first comparisons to show where the approach works consistently and where local conditions call for a different design.`,
-    `The work is shaped by a familiar tension: a shared standard can make services easier to coordinate, but a uniform plan may miss the differences between neighborhoods. In ${topic[1]}, organizers are collecting feedback from people who would use the program as well as those responsible for running it. The schedule also leaves room to revise procedures when an early test exposes an unexpected cost or access barrier.`,
-    `One open question is whether ${topic[5]}. Project staff have asked participating groups to document staffing, maintenance, and access needs alongside headline measures. They are also comparing short-term benefits with the effort required to keep the service reliable. Local partners say that clear responsibilities will matter as much as the initial funding if the work is to continue beyond its trial period.`,
-    `The next stage will test the proposed response. ${topic[4].charAt(0).toUpperCase()}${topic[4].slice(1)}. Over the coming months, organizers plan to publish a progress summary, hold open sessions, and explain which parts of the plan changed in response to feedback. The review will include both successful sites and places where the approach did not meet expectations. That record should help decision-makers avoid treating a small pilot as proof that the same model will work everywhere.`,
-    `For now, the project remains a local test rather than a settled policy. Residents can follow the schedule through public notices from participating organizations, which will share further details as dates are confirmed. A broader decision is expected only after the first results are reviewed. The central question is whether the process can deliver a dependable improvement without placing new burdens on the people it is meant to serve.`
+  const variant = index % 8;
+  const siteCount = stableInt(index, 0, 8, 42);
+  const reviewMonths = stableInt(index, 1, 2, 9);
+  const excerpt = EXCERPT_STYLES[variant](topic, `${siteCount} locations or participating groups`);
+  const content = [
+    OPENING_STYLES[variant](topic),
+    REPORTING_DETAILS[(variant + categoryIndex) % REPORTING_DETAILS.length](topic, siteCount, reviewMonths),
+    COMMUNITY_DETAILS[(variant + topicIndex) % COMMUNITY_DETAILS.length](topic),
+    UNCERTAINTY_DETAILS[(variant + 2) % UNCERTAINTY_DETAILS.length](topic),
+    NEXT_STEPS[(variant + categoryIndex + topicIndex) % NEXT_STEPS.length](topic, reviewMonths)
   ];
-  const paragraphCount = 3 + (index % 4);
-  const content = paragraphs.slice(0, paragraphCount + 1);
-  if (index % 5 === 0) {
-    content.push(`The implementation also depends on details that are easy to overlook: how participants hear about the service, how quickly questions receive an answer, and which team is responsible when plans change. Organizers are documenting those steps so the public review can distinguish a promising idea from a process that is practical to operate. This record will be shared alongside the main results.`);
-  }
-  if (index % 17 === 0) {
-    content.push(`Partners are also considering how the work can adapt over time. A process that fits a small initial group may need different staff, equipment, or schedules when more people take part. The current phase is intended to identify those needs early, before a permanent commitment is made. Any decision to extend the project will include a fresh review of costs, access, and local feedback.`);
-  }
-  if (index % 3 === 0) {
-    content.push(`A separate review later in ${year} will look at participation, reliability, and recurring costs. Until then, the teams involved are treating the early numbers as a guide for planning rather than a final verdict. Any next phase will depend on what the public record shows and whether the partners can agree on a sustainable way to continue.`);
-  }
-  return { category: category.name, title, excerpt, content, image: IMAGES[index % IMAGES.length], topic: topic[0] };
+  return {
+    category: category.name, title, excerpt, content, image: imageFor(index),
+    topicDetails: { topic: topic[0], place: topic[1], issue: topic[2], proposal: topic[3], update: topic[4], uncertainty: topic[5] }
+  };
+}
+
+function submittedStory(story, index, image = story.image) {
+  const topic = story.topicDetails;
+  const variant = index % 8;
+  const title = `${REVISION_HEADLINE_ANGLES[variant]} ${topic.topic} in ${topic.place}`;
+  const excerpt = [
+    `The revised copy adds detail on how ${topic.proposal} would respond to ${topic.issue}, and identifies what residents can expect during the first review.`,
+    `This version puts the local timetable in focus, with new context on ${topic.update} and the question of ${topic.uncertainty}.`,
+    `The update explains who would take part in ${topic.proposal} and how the team plans to assess whether it is working.`,
+    `A revised account of the proposal includes more on ${topic.issue}, the expected local impact, and the limits of the first phase.`,
+    `The new draft adds reporting about ${topic.update} and clarifies why ${topic.uncertainty} remains unresolved.`,
+    `This submission expands the explanation of ${topic.proposal}, including the practical questions raised by residents and local partners.`,
+    `The reporter has added context on the groups affected in ${topic.place} and the evidence needed before the plan can grow.`,
+    `The revised story distinguishes the early test from a permanent policy and adds detail about ${topic.uncertainty}.`
+  ][variant];
+  const revisionParagraphs = [
+    `This version follows the people responsible for putting ${topic.proposal} into practice. In ${topic.place}, their first task is to respond to ${topic.issue} while making the service understandable to residents.`,
+    story.content[1],
+    `The reporter's update adds a closer look at ${topic.update}. That work is expected to show where the proposal fits local routines and where additional coordination is needed.`,
+    story.content[3],
+    `The next review will examine ${topic.uncertainty} alongside participation and reliability. Organizers say they will publish the findings before deciding whether to continue.`
+  ];
+  return { category: story.category, title, excerpt, content: revisionParagraphs, image };
 }
 
 function makeBuckets(articleId, publishedAt, articleIndex) {
@@ -206,13 +294,19 @@ function makeBuckets(articleId, publishedAt, articleIndex) {
 }
 
 async function ensureUser(username, role, createdUsers) {
+  const displayName = username.split(/[._-]+/).filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
   let user = await User.findOne({ username });
   if (user) {
     if (user.role !== role) throw new Error(`Existing account "${username}" has role "${user.role}", expected "${role}".`);
+    if (!user.displayName) {
+      user.displayName = displayName;
+      await user.save();
+    }
     return user;
   }
   const password = `${crypto.randomBytes(18).toString('base64url')}aA7!`;
-  user = await User.create({ username, role, passwordHash: await hashPassword(password) });
+  user = await User.create({ username, displayName, role, passwordHash: await hashPassword(password) });
   createdUsers.push({ username, role, password });
   return user;
 }
@@ -226,9 +320,9 @@ function batches(items, size = 1000) {
 async function createDemoUsers() {
   const createdUsers = [];
   const reporters = [];
-  for (const account of REPORTER_ACCOUNTS) {
-    const user = await ensureUser(account.username, 'reporter', createdUsers);
-    reporters.push({ id: user._id, username: user.username, displayName: account.displayName });
+  for (const username of REPORTER_ACCOUNTS) {
+    const user = await ensureUser(username, 'reporter', createdUsers);
+    reporters.push({ id: user._id, username: user.username, displayName: user.displayName || user.username });
   }
   const editor = await ensureUser(EDITOR_USERNAME, 'editor', createdUsers);
   if (createdUsers.length) {
@@ -298,11 +392,11 @@ async function seed() {
     const firstPublishedAt = hasPublicVersion ? new Date(Math.min(now.getTime(), createdAt.getTime() + randomInt(0, 4) * 60 * 60 * 1000)) : null;
     const slug = slugify(story.title, index);
     const publicStory = { ...story };
-    const pendingStory = {
-      ...story,
-      title: story.title.replace(/^(A new pilot puts|Local leaders revisit|A wider plan emerges for|New data sharpens debate over|Communities test a fresh approach to|A regional review puts|The next phase begins for|Residents weigh new options for)/, 'Editors review'),
-      excerpt: `${story.excerpt} This proposed revision is awaiting editorial review.`
-    };
+    const pendingStory = submittedStory(
+      story,
+      index,
+      hasPublicVersion && (isPending || isReturned) ? revisionImageFor(index) : story.image
+    );
     const article = {
       _id: new mongoose.Types.ObjectId(), slug, author: reporter.displayName, reporter: reporter.id,
       category: story.category, image: story.image, views: 0,
@@ -310,7 +404,8 @@ async function seed() {
     };
 
     if (hasPublicVersion) {
-      Object.assign(article, publicStory, {
+      const { topicDetails: _topicDetails, ...publicVersion } = publicStory;
+      Object.assign(article, publicVersion, {
         status: 'published', approved: true, workflowStatus: isPending ? 'pending' : isReturned ? 'returned' : 'published',
         publishedAt: firstPublishedAt,
         readingTimeMinutes: estimateReadingTimeMinutes(publicStory.content),
@@ -364,8 +459,8 @@ async function seed() {
       article.status = isPending ? 'pending' : 'draft';
       article.approved = false;
       article.workflowStatus = isPending ? 'pending' : isReturned ? 'returned' : 'draft';
-      article.workingCopy = story;
-      article.submittedCopy = isPending || isReturned ? story : undefined;
+      article.workingCopy = isPending || isReturned ? pendingStory : story;
+      article.submittedCopy = isPending || isReturned ? pendingStory : undefined;
       article.reviewNote = isReturned ? 'Please explain the reporting method and add a source note before resubmitting.' : '';
       article.submittedAt = isPending || isReturned ? createdAt : undefined;
     }
@@ -373,6 +468,9 @@ async function seed() {
   }
 
   if (articleDocs.length !== 500) throw new Error(`Expected 500 article fixtures, built ${articleDocs.length}.`);
+  const fixtureTitles = articleDocs.map((article) => article.workingCopy?.title || article.title);
+  if (new Set(fixtureTitles).size !== 500) throw new Error('Fixture story titles must be unique.');
+  if (DEMO_IMAGE_IDS.length < 520) throw new Error('At least 520 distinct Picsum image IDs are required.');
   await Article.insertMany(articleDocs, { ordered: true });
   if (comments.length) await Comment.insertMany(comments, { ordered: false });
 
@@ -419,11 +517,15 @@ async function seed() {
   if (createdCredentials) console.log('New account credentials are saved in the Git-ignored .demo-credentials.txt file.');
 }
 
-seed()
-  .catch((error) => {
-    console.error(`Demo seed failed: ${error.message}`);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    if (mongoose.connection.readyState) await mongoose.disconnect();
-  });
+if (require.main === module) {
+  seed()
+    .catch((error) => {
+      console.error(`Demo seed failed: ${error.message}`);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      if (mongoose.connection.readyState) await mongoose.disconnect();
+    });
+}
+
+module.exports = { storyFor, submittedStory, imageFor, revisionImageFor };

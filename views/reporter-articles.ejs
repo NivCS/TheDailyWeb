@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=9">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=10">
   </head>
   <body class="reporter-body">
     <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
@@ -45,6 +45,7 @@
             <div class="reporter-article-main">
               <div class="reporter-card-top"><span class="reporter-status reporter-status-<%= article.workflowStatus %>"><%= article.workflowLabel %></span><% if (article.isPublished) { %><span class="reporter-live-tag">Public version is live</span><% } %></div>
               <h2><%= article.displayTitle %></h2>
+              <% if (article.isPublished && article.displayTitle !== article.title) { %><p class="reporter-live-version-title">Currently live as: <strong><%= article.title %></strong></p><% } %>
               <p><%= article.workingCopy?.excerpt || article.excerpt || 'No summary yet.' %></p>
               <% if (article.workflowStatus === 'returned' && article.reviewNote) { %><div class="reporter-review-note"><strong>Editor’s note</strong><span><%= article.reviewNote %></span></div><% } %>
               <div class="reporter-card-meta"><span><%= article.workingCopy?.category || article.category %></span><span>Updated <%= new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(article.updatedAt)) %></span></div>

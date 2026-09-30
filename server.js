@@ -7,6 +7,7 @@ const articleRoutes = require('./routes/articleRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { loadUser } = require('./middleware/authentication');
 const { renderDetailPage } = require('./controllers/articleController');
+const categories = require('./config/articleCategories');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -25,7 +26,7 @@ app.get('/article/:slug', renderDetailPage);
 app.use('/api/articles', articleRoutes);
 
 app.get('*', (req, res) => {
-  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home' });
+  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home', categories });
 });
 
 app.use((error, req, res, next) => {

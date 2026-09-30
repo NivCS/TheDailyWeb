@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f3">
+  <title><%= pageTitle %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=analytics-9">
+  <script defer src="/vendor/chart.js/chart.umd.min.js"></script>
+  <script defer src="/vendor/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js"></script>
+  <script defer src="/assets/js/editor-analytics.js?v=9"></script>
+</head>
+<body>
+  <%- include('partials/siteHeader', { currentUser, activeNav }) %>
+  <main class="reporter-main analytics-main">
+    <section class="reporter-heading analytics-heading">
+      <div>
+        <p class="eyebrow"><span class="eyebrow-line"></span> Impact analytics</p>
+        <h1>Stories in <span>context</span></h1>
+        <p>Follow views and see when each public version went live.</p>
+      </div>
+    </section>
+
+    <section class="analytics-panel" aria-label="Article analytics controls">
+      <div class="analytics-filters">
+        <label class="analytics-field" for="analytics-range">
+          <span>Time range</span>
+          <div class="analytics-select-shell">
+            <select id="analytics-range" <%= articles.length ? '' : 'disabled' %>>
+              <option value="1h">Last 1 hour</option>
+              <option value="24h">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d" selected>Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+            <span class="analytics-dropdown-chevron" aria-hidden="true"><svg viewBox="0 0 12 8" focusable="false"><path d="m1.5 2 4.5 4 4.5-4"></path></svg></span>
+          </div>
+        </label>
+        <div class="analytics-field">
+          <span id="analytics-article-label">Published article</span>
+          <div class="analytics-article-picker" id="analytics-article-picker">
+            <button class="analytics-article-trigger" id="analytics-article-button" type="button"
+              aria-haspopup="listbox" aria-expanded="false" aria-controls="analytics-article-menu"
+              data-article-id="<%= articles[0] ? articles[0]._id : '' %>" <%= articles.length ? '' : 'disabled' %>>
+              <span id="analytics-selected-article"><%= articles[0] ? articles[0].title : 'No published articles' %></span>
+              <span class="analytics-dropdown-chevron" aria-hidden="true"><svg viewBox="0 0 12 8" focusable="false"><path d="m1.5 2 4.5 4 4.5-4"></path></svg></span>
+            </button>
+            <div class="analytics-article-menu" id="analytics-article-menu" hidden>
+              <label class="analytics-article-search">
+                <span class="sr-only">Search published articles</span>
+                <input id="analytics-article-search" type="search" placeholder="Search articles..." autocomplete="off">
+              </label>
+              <p class="analytics-article-no-results" id="analytics-article-no-results" hidden>No matching articles.</p>
+              <div role="listbox" aria-labelledby="analytics-article-label">
+                <% articles.forEach((article, index) => { %>
+                  <button class="analytics-article-option" type="button" role="option"
+                    data-article-id="<%= article._id %>" aria-selected="<%= index === 0 ? 'true' : 'false' %>"
+                    tabindex="<%= index === 0 ? '0' : '-1' %>"><%= article.title %></button>
+                <% }) %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="analytics-status <%= articles.length ? '' : 'is-empty' %>" id="analytics-status" role="status" aria-live="polite"><%= articles.length ? '' : 'There are no published articles to analyze yet.' %></p>
+    </section>
+
+    <section class="analytics-summary" aria-label="Readership summary">
+      <article class="analytics-stat"><span>Total views</span><strong id="analytics-total-views">—</strong></article>
+      <article class="analytics-stat"><span>Views in selected period</span><strong id="analytics-range-views">—</strong></article>
+      <article class="analytics-stat"><span>Tracking since</span><strong id="analytics-tracking-start">—</strong></article>
+    </section>
+
+    <section class="analytics-panel analytics-chart-panel" aria-labelledby="analytics-chart-heading">
+      <div class="analytics-panel-heading">
+        <div><p class="eyebrow"><span class="eyebrow-line"></span> Cumulative views</p><h2 id="analytics-chart-heading">Total views over time</h2></div>
+        <div class="analytics-legend" aria-label="Chart legend">
+          <span class="analytics-event-key"><i class="analytics-views-key" aria-hidden="true"></i> Number of views</span>
+          <span class="analytics-event-key"><i class="analytics-publication-key" aria-hidden="true"></i> Initial publication</span>
+          <span class="analytics-event-key"><i class="analytics-update-key" aria-hidden="true"></i> Approved updates</span>
+        </div>
+      </div>
+      <div class="analytics-chart-wrap">
+        <canvas id="analytics-chart" role="img" aria-label="Cumulative article views. Vertical markers identify publication and update times."></canvas>
+        <div class="analytics-hover-label" id="analytics-update-hover-label" aria-hidden="true" hidden></div>
+      </div>
+    </section>
+
+    <section class="analytics-panel analytics-events-panel" aria-labelledby="analytics-events-heading">
+      <div class="analytics-panel-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> Publication history</p><h2 id="analytics-events-heading">Publication and update points</h2></div></div>
+      <ol class="analytics-events" id="publication-event-list"><li class="analytics-events-empty">Publication markers will appear here.</li></ol>
+    </section>
+    <a class="reporter-home-link" href="/editor/articles">Back to editor workspace <span aria-hidden="true">↗</span></a>
+  </main>
+  <footer class="site-footer" id="about">
+    <div class="footer-top"><div><a class="brand footer-brand" href="/" aria-label="The Daily Web home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">the daily<span>web</span></span></a><p>Make room for a better informed day.</p></div><a class="back-top" href="#top" aria-label="Back to top">↑</a></div>
+    <div class="footer-bottom"><span>© 2026 The Daily Web</span><span>Independent by design. Curious by nature.</span><a href="mailto:hello@thedailyweb.example">Get in touch <span aria-hidden="true">↗</span></a></div>
+  </footer>
+</body>
+</html>

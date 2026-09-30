@@ -16,7 +16,7 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - Infinite scrolling loads up to 20 additional stories per request.
 - Search matches headline, summary, category, and reporter without a full-page refresh.
 - Category, read/unread, and publication-date/popularity filters update through AJAX requests.
-- Story cards show a headline, image, summary, category, author, and publication date.
+- Story cards show a headline, image, summary, category, author, publication date, reading time, and view count. Direct article requests return the full article content in the initial server-rendered HTML.
 - Selecting a story opens its full article in the same app; read state is remembered in the browser.
 - Article pages show comments and let visitors post without refreshing the comment list.
 - Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
@@ -26,19 +26,31 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 
 ## Project structure
 
-- `models/Article.js` — Mongoose article schema.
 - `models/Comment.js` and `models/CommentRateLimit.js` — comment and guest rate-limit schemas.
 - `models/Article.js` — article records, reporter ownership, editorial status, and separate working copies.
+- `models/ArticleViewBucket.js` and `models/ArticlePublicationEvent.js` — sharded view history and publication history. Each article stores its lifetime view total and reading time.
 - `data/articleStore.js` — MongoDB article data access.
 - `data/reporterArticleStore.js` and `controllers/reporterController.js` — reporter ownership, draft autosave, and submission workflow.
 - `data/commentStore.js` — comment reads/writes and atomic guest rate-limit reservations.
 - `controllers/articleController.js` and `controllers/commentController.js` — request handling and input normalization.
 - `routes/articleRoutes.js` — REST endpoints for the public article list, article detail, and comments.
-- `routes/authRoutes.js` — protected reporter pages and draft/submission API endpoints.
+- `routes/authRoutes.js` — protected reporter/editor pages and workflow/analytics API endpoints.
+- `data/analyticsStore.js` and `controllers/analyticsController.js` — five-minute readership recording and editor analytics queries.
+- `views/editor-analytics.ejs` and `public/js/editor-analytics.js` — editor chart and publication markers.
 - `views/home.ejs` — page template and shared navigation/footer.
 - `public/js/home.js` and `public/css/styles.css` — client-side feed behavior and responsive styling.
 
-The current milestone covers the public home page and read endpoints. The remaining role-specific workflows and create/update/delete operations can be added in later steps while extending the same MVC structure.
+The application follows an MVC-style structure: routes apply role checks, controllers handle HTTP requests, data stores encapsulate database operations, and Mongoose models define persisted records. Article creation, editing, review, publication, and deletion follow the reporter/editor workflow described below.
+
+## Impact analytics
+
+- Only editors can open `/editor/analytics` or its article analytics API. The page supports 1-hour, 24-hour, 7-day, 30-day, and 90-day ranges.
+- A successful request for a published article increments its lifetime total and one five-minute bucket in the same transaction. Each bucket is split across eight counter shards so concurrent readers do not all write to one counter document.
+- The chart uses Chart.js with publication markers. New publication and approved-update events are written in the same MongoDB transaction as the article change.
+- Each article stores a lifetime view total. View history is also written to five-minute buckets split across eight shards; the editor chart groups longer ranges into hourly points and marks publication and approved-update events.
+- Published dates represent the first time an article became public. Later approved changes are recorded as publication events, so analytics can show the update without changing the original publication date.
+- For a fresh demonstration dataset, set `MONGODB_URI` and run `npm run seed-demo-data -- --replace`. This replaces article, comment, view-bucket, and publication-event data with 500 synthetic articles dated across the previous two months. It preserves existing accounts and adds reporter accounts if needed. New account passwords are written only to the Git-ignored `.demo-credentials.txt` file.
+- Demo content, comments, readership figures, and dates are fabricated for coursework demonstrations; they are not reports of real events.
 
 ## Accounts and authentication
 

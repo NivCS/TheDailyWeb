@@ -6,6 +6,8 @@ const mongoose = require('mongoose');
 const articleRoutes = require('./routes/articleRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { loadUser } = require('./middleware/authentication');
+const { renderDetailPage } = require('./controllers/articleController');
+const categories = require('./config/articleCategories');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -15,13 +17,16 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/assets', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules', 'chart.js', 'dist'), { maxAge: '1d' }));
+app.use('/vendor/chartjs-plugin-annotation', express.static(path.join(__dirname, 'node_modules', 'chartjs-plugin-annotation', 'dist'), { maxAge: '1d' }));
 
 app.use(loadUser);
 app.use(authRoutes);
+app.get('/article/:slug', renderDetailPage);
 app.use('/api/articles', articleRoutes);
 
 app.get('*', (req, res) => {
-  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home' });
+  res.render('home', { pageTitle: 'The Daily Web', currentUser: req.user, activeNav: 'home', categories });
 });
 
 app.use((error, req, res, next) => {

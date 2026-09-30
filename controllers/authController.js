@@ -64,8 +64,4 @@ function editorArticles(req, res) {
   renderWorkspace(req, res, 'Editor', heading, 'Article review, publishing, and management tools will be implemented in the next project step.');
 }
 
-function editorAnalytics(req, res) {
-  renderWorkspace(req, res, 'Editor', 'Impact analytics', 'Article view analytics will be implemented in the next project step.');
-}
-
-module.exports = { loginPage, login, logout, editorHome, editorArticles, editorAnalytics };
+module.exports = { loginPage, login, logout, editorHome, editorArticles };

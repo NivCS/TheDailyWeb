@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f7f3">
 <title><%= pageTitle %></title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/styles.css?v=8"></head>
+<link rel="stylesheet" href="/assets/css/styles.css?v=9"></head>
 <body class="reporter-body">
 <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
 <%- include('partials/siteHeader', { currentUser, activeNav: 'editor' }) %>
@@ -18,7 +18,7 @@
 <% if (!articles.length) { %><div class="reporter-empty"><strong>No articles found.</strong><span>Try another status or search term.</span></div><% } %>
 <% articles.forEach((article) => { %><article class="reporter-article-card editor-article-card"><div class="reporter-article-main">
 <div class="reporter-card-top"><span class="reporter-status reporter-status-<%= article.workflowStatus %>"><%= article.statusLabel %></span><% if (article.hasPublicVersion) { %><span class="reporter-live-tag">A version is live</span><% } %></div>
-<h2><%= article.displayTitle %></h2><p><%= article.displayExcerpt %></p>
+<h2><%= article.displayTitle %></h2><% if (article.hasPublicVersion && article.displayTitle !== article.title) { %><p class="reporter-live-version-title">Currently live as: <strong><%= article.title %></strong></p><% } %><p><%= article.displayExcerpt %></p>
 <div class="reporter-card-meta"><span><%= article.workingCopy.category || article.category %></span><span>By <%= article.author %></span><span>Updated <%= new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(article.updatedAt)) %></span></div></div>
 <div class="reporter-card-action"><a class="reporter-secondary-link" href="/editor/articles/<%= article._id %>"><%= article.workflowStatus === 'pending' ? 'Review submission' : article.hasPublicVersion ? 'Edit article' : 'View article' %></a></div></article><% }) %>
 </section><a class="reporter-home-link" href="/">Return to the public news feed <span aria-hidden="true">→</span></a></main>

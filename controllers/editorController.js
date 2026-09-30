@@ -2,7 +2,7 @@ const {
   approveEditorArticle, deleteEditorArticle, findEditorArticle, listEditorArticles,
   returnEditorArticle, saveEditorChanges, savePublishedEditorChanges
 } = require('../data/editorArticleStore');
-const categories = ['Science', 'Technology', 'Business', 'Climate', 'Culture', 'Health', 'World', 'Other'];
+const categories = require('../config/articleCategories');
 const statuses = ['draft', 'pending', 'returned', 'published'];
 const labels = { draft: 'In preparation', pending: 'Awaiting editor approval', returned: 'Returned for revisions', published: 'Published' };
 function editorHome(req, res) { res.redirect('/editor/articles?status=pending'); }
@@ -41,6 +41,7 @@ async function editorReviewPage(req, res, next) {
         ? { title: article.title, excerpt: article.excerpt, content: article.content, category: article.category, image: article.image }
         : article.workingCopy,
       canEdit: article.workflowStatus === 'pending' || (article.hasPublicVersion && article.workflowStatus !== 'returned'),
+      categories,
       activeNav: 'editor',
       workflowLabel: article.workflowStatus === 'pending' && article.hasPublicVersion
         ? 'Update awaiting approval' : labels[article.workflowStatus] || 'In preparation'
@@ -85,7 +86,7 @@ async function savePublishedChanges(req, res, next) {
     const workingCopy = normalizeWorkingCopy(req.body?.workingCopy);
     const problem = validateWorkingCopy(workingCopy);
     if (problem) return res.status(400).json({ error: problem });
-    const article = await savePublishedEditorChanges(req.params.id, workingCopy);
+    const article = await savePublishedEditorChanges(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer available as a published article.' });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles/' + article._id, message: 'Changes are now published.' });
   } catch (error) { next(error); }
@@ -96,7 +97,7 @@ async function approve(req, res, next) {
     const workingCopy = normalizeWorkingCopy(req.body?.workingCopy);
     const problem = validateWorkingCopy(workingCopy);
     if (problem) return res.status(400).json({ error: problem });
-    const article = await approveEditorArticle(req.params.id, workingCopy);
+    const article = await approveEditorArticle(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer awaiting review.' });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles?status=published', message: 'The article is now published.' });
   } catch (error) { next(error); }

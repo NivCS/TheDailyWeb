@@ -53,16 +53,16 @@ async function listReporterArticles(reporterId, { status = 'all', sort = 'newest
   return status === 'all' ? articles : articles.filter((article) => articleWorkflowStatus(article) === status);
 }
 
-async function createReporterArticle(reporterId, username) {
+async function createReporterArticle(reporterId, displayName) {
   const article = await Article.create({
     title: 'Untitled story',
     slug: slugify('untitled-story'),
     excerpt: '',
     content: [],
     category: 'World',
-    author: username,
+    author: displayName,
     image: '',
-    publishedAt: new Date(),
+    publishedAt: null,
     reporter: reporterId,
     status: 'draft',
     approved: false,

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f7f3">
+    <meta name="description" content="<%= article.excerpt %>">
+    <title><%= pageTitle %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=7">
+    <script defer src="/assets/js/home.js?v=4"></script>
+  </head>
+  <body id="top">
+    <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+    <%- include('partials/siteHeader', { currentUser, activeNav }) %>
+
+    <main id="app" tabindex="-1">
+      <article class="detail-page" data-article-detail data-article-slug="<%= article.slug %>">
+        <a class="detail-back" href="/"><span aria-hidden="true">←</span> Back to all stories</a>
+        <header class="detail-header">
+          <div class="detail-category"><%= article.category %> <span aria-hidden="true">·</span> The Daily Web</div>
+          <h1 class="detail-title"><%= article.title %></h1>
+          <p class="detail-excerpt"><%= article.excerpt %></p>
+          <div class="detail-byline"><span>By <strong><%= article.author %></strong></span><time datetime="<%= article.publishedAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(article.publishedAt) %></time><span><%= article.readingTimeMinutes %> min read</span></div>
+        </header>
+        <div class="detail-image-wrap"><img class="detail-image" src="<%= article.image %>" alt="Editorial photograph for <%= article.title %>"></div>
+        <div class="detail-body">
+          <% (article.content || []).forEach((paragraph) => String(paragraph || '').split(/\r?\n/).filter((line) => line.trim()).forEach((line) => { %>
+            <p><%= line.trim() %></p>
+          <% })) %>
+          <div class="detail-end">You’re reading The Daily Web</div>
+        </div>
+        <section class="comments-section" aria-labelledby="comments-title">
+          <div class="comments-heading"><p class="eyebrow"><span class="eyebrow-line"></span> Join the conversation</p><h2 id="comments-title">Comments</h2></div>
+          <div id="comment-list" class="comment-list" aria-live="polite">
+            <% if (comments.length) { %>
+              <% comments.forEach((comment) => { %>
+                <article class="comment-item">
+                  <div class="comment-meta"><strong><%= comment.author || 'Guest' %></strong><time datetime="<%= comment.createdAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(comment.createdAt) %></time></div>
+                  <p><%= comment.body %></p>
+                </article>
+              <% }) %>
+            <% } else { %>
+              <p class="comment-empty">No comments yet. Start the conversation.</p>
+            <% } %>
+          </div>
+          <form id="comment-form" class="comment-form">
+            <label for="comment-author">Name <span>(optional)</span></label>
+            <input id="comment-author" name="author" type="text" maxlength="40" autocomplete="name" placeholder="Guest">
+            <label for="comment-body">Your comment</label>
+            <textarea id="comment-body" name="body" maxlength="1000" rows="4" required placeholder="Share a thoughtful response…"></textarea>
+            <div class="comment-form-footer"><span>Up to 1,000 characters. Guests can post 3 comments per minute per device.</span><button class="comment-submit" type="submit">Post comment <span aria-hidden="true">→</span></button></div>
+            <p id="comment-status" class="comment-status" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </article>
+    </main>
+
+    <footer class="site-footer" id="about">
+      <div class="footer-top"><div><a class="brand footer-brand" href="/" aria-label="The Daily Web home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">the daily<span>web</span></span></a><p>Make room for a better informed day.</p></div><a class="back-top" href="#top" aria-label="Back to top">↑</a></div>
+      <div class="footer-bottom"><span>© 2026 The Daily Web</span><span>Independent by design. Curious by nature.</span><a href="mailto:hello@thedailyweb.example">Get in touch <span aria-hidden="true">↗</span></a></div>
+    </footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

@@ -6,7 +6,7 @@ function escapeRegex(value) {
 
 const PUBLIC_ARTICLE_FIELDS = {
   _id: 1, title: 1, slug: 1, excerpt: 1, category: 1, author: 1,
-  image: 1, publishedAt: 1, readingTimeMinutes: 1, views: 1
+  image: 1, publishedAt: 1, views: 1
 };
 
 async function listPublishedArticles({ search = '', category = '', readState = 'all', viewedIds = [], sort = 'date', offset = 0, limit = 20 }) {
@@ -27,7 +27,7 @@ async function listPublishedArticles({ search = '', category = '', readState = '
   const order = sort === 'popular' ? { views: -1, publishedAt: -1 } : { publishedAt: -1 };
   const pageStages = [
     { $match: filter }, { $sort: order }, { $skip: safeOffset }, { $limit: safeLimit },
-    { $project: { ...PUBLIC_ARTICLE_FIELDS, views: { $ifNull: ['$views', 0] }, readingTimeMinutes: { $ifNull: ['$readingTimeMinutes', 1] } } }
+    { $project: { ...PUBLIC_ARTICLE_FIELDS, views: { $ifNull: ['$views', 0] } } }
   ];
   const [articles, total] = await Promise.all([
     Article.aggregate(pageStages),
@@ -40,7 +40,7 @@ async function findPublishedArticle(id) {
   const articles = await Article.aggregate([
     { $match: { status: 'published', approved: true, publishedAt: { $lte: new Date() }, slug: id } },
     { $limit: 1 },
-    { $project: { ...PUBLIC_ARTICLE_FIELDS, content: 1, views: { $ifNull: ['$views', 0] }, readingTimeMinutes: { $ifNull: ['$readingTimeMinutes', 1] } } }
+    { $project: { ...PUBLIC_ARTICLE_FIELDS, content: 1, views: { $ifNull: ['$views', 0] } } }
   ]);
   return articles[0] || null;
 }

@@ -22,7 +22,6 @@ const articleSchema = new mongoose.Schema({
     required: function requirePublishedDate() { return this.status === 'published' && this.approved; },
     index: true
   },
-  readingTimeMinutes: { type: Number, required: true, min: 1, default: 1 },
   views: { type: Number, required: true, min: 0, default: 0 },
   // `status` and `approved` describe the public version; workflowStatus tracks the reporter's current working copy.
   status: { type: String, enum: ['draft', 'pending', 'published'], default: 'draft', index: true },

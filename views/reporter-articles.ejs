@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=11">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=13">
   </head>
   <body class="reporter-body">
     <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
@@ -34,6 +34,7 @@
             <option value="oldest" <%= selectedSort === 'oldest' ? 'selected' : '' %>>Least recently updated</option>
           </select>
         </label>
+        <label class="editor-search-label">Search<input type="search" name="search" value="<%= search %>" maxlength="120" placeholder="Headline, reporter, category"></label>
         <button class="reporter-filter-button" type="submit">Apply filters</button>
       </form>
       <section class="reporter-article-list" aria-label="Your articles">
@@ -60,6 +61,6 @@
       <a class="reporter-home-link" href="/">Return to the public news feed <span aria-hidden="true">→</span></a>
     </main>
     <footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
-    <script defer src="/assets/js/reporter-articles.js?v=2"></script>
+    <script defer src="/assets/js/reporter-articles.js?v=3"></script>
   </body>
 </html>

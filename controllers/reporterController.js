@@ -21,12 +21,21 @@ const workflowLabels = {
 function reporterArticlesPage(req, res, next) {
   const selectedStatus = ['draft', 'pending', 'published', 'returned'].includes(req.query.status) ? req.query.status : 'all';
   const selectedSort = req.query.sort === 'oldest' ? 'oldest' : 'newest';
+  const search = String(req.query.search || '').trim().slice(0, 120);
   listReporterArticles(req.user.id, { status: selectedStatus, sort: selectedSort }).then((articles) => {
+    if (search) {
+      const query = search.toLocaleLowerCase();
+      articles = articles.filter((article) => [
+        article.title, article.author, article.category, article.workingCopy?.title,
+        article.workingCopy?.excerpt, article.excerpt
+      ].some((value) => String(value || '').toLocaleLowerCase().includes(query)));
+    }
     res.render('reporter-articles', {
       pageTitle: 'My articles | The Daily Web',
       currentUser: req.user,
       selectedStatus,
       selectedSort,
+      search,
       articles: articles.map((article) => ({
         ...article,
         displayTitle: article.workingCopy?.title || article.title || 'Untitled story',

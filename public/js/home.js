@@ -97,8 +97,8 @@
     const isRead = getReadIds().includes(article.slug);
     const date = formatDate(article.publishedAt);
     return `<article class="story-card">
-      <a class="story-image-link" href="/article/${encodeURIComponent(article.slug)}" data-story-link="${escapeHtml(article.slug)}" aria-label="Read: ${escapeHtml(article.title)}">
-        <img class="story-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}" loading="lazy">
+      <a class="story-image-link article-image-crop" href="/article/${encodeURIComponent(article.slug)}" data-story-link="${escapeHtml(article.slug)}" aria-label="Read: ${escapeHtml(article.title)}">
+        <img class="story-image article-image-crop-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}" loading="lazy">
         <span class="story-category">${escapeHtml(article.category)}</span>
         <span class="story-read-mark ${isRead ? '' : 'is-unread'}" aria-label="${isRead ? 'Read' : 'Unread'}">${isRead ? '✓' : ''}</span>
       </a>
@@ -106,7 +106,7 @@
         <div class="story-overline"><span class="story-author">By ${escapeHtml(article.author)}</span><time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(date)}</time></div>
         <h3 class="story-title"><a href="/article/${encodeURIComponent(article.slug)}" data-story-link="${escapeHtml(article.slug)}">${escapeHtml(article.title)}</a></h3>
         <p class="story-excerpt">${escapeHtml(article.excerpt)}</p>
-        <div class="story-card-footer"><span class="story-read-time">${Number(article.readingTimeMinutes || 1)} min read</span><span>${Number(article.views || 0).toLocaleString('en')} reads</span></div>
+        <div class="story-card-footer"><span>${Number(article.views || 0).toLocaleString('en')} reads</span></div>
       </div>
     </article>`;
   };
@@ -241,7 +241,7 @@
           <div class="detail-category">${escapeHtml(article.category)} <span aria-hidden="true">·</span> The Daily Web</div>
           <h1 class="detail-title">${escapeHtml(article.title)}</h1>
           <p class="detail-excerpt">${escapeHtml(article.excerpt)}</p>
-          <div class="detail-byline"><span>By <strong>${escapeHtml(article.author)}</strong></span><time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(formatDate(article.publishedAt))}</time><span>${Number(article.readingTimeMinutes || 1)} min read</span></div>
+          <div class="detail-byline"><span>By <strong>${escapeHtml(article.author)}</strong></span><time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(formatDate(article.publishedAt))}</time></div>
         </header>
         <div class="detail-image-wrap"><img class="detail-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}"></div>
         <div class="detail-body">${(article.content || [article.excerpt]).flatMap((paragraph) => String(paragraph || '').split(/\r?\n/)).filter((paragraph) => paragraph.trim()).map((paragraph) => `<p>${escapeHtml(paragraph.trim())}</p>`).join('')}<div class="detail-end">You’re reading The Daily Web</div></div>

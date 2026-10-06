@@ -5,7 +5,6 @@ mongoose.set('autoIndex', false);
 
 const Article = require('../models/Article');
 const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
-const { estimateReadingTimeMinutes } = require('../services/readingTime');
 const { storyFor, submittedStory, revisionImageFor } = require('./seedDemoData');
 
 function copyFields(story) {
@@ -42,7 +41,6 @@ async function refresh() {
 
     if (hasPublicVersion) {
       Object.assign(update, copyFields(story), {
-        readingTimeMinutes: estimateReadingTimeMinutes(story.content),
         workingCopy: hasRevision ? copyFields(revision) : copyFields(story)
       });
       if (hasRevision) update.submittedCopy = copyFields(revision);
@@ -50,7 +48,6 @@ async function refresh() {
     } else {
       Object.assign(update, {
         title: 'Untitled story', excerpt: '', content: [], image: '', publishedAt: null,
-        readingTimeMinutes: estimateReadingTimeMinutes((hasRevision ? revision : story).content),
         workingCopy: copyFields(hasRevision ? revision : story)
       });
       if (hasRevision) update.submittedCopy = copyFields(revision);

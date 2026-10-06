@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f7f3">
 <title><%= pageTitle %></title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/styles.css?v=10"><script defer src="/assets/js/editor-review.js?v=2"></script></head>
+<link rel="stylesheet" href="/assets/css/styles.css?v=mobile-menus-1"><script defer src="/assets/js/editor-review.js?v=4"></script></head>
 <body class="reporter-body"><div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
 <%- include('partials/siteHeader', { currentUser, activeNav }) %>
 <main class="reporter-main editor-main" id="editor-review" data-article-id="<%= article._id %>" data-workflow-status="<%= article.workflowStatus %>" data-has-public="<%= article.hasPublicVersion %>">
@@ -24,6 +24,7 @@
 <label for="editor-excerpt">Summary</label><textarea id="editor-excerpt" maxlength="500" rows="3" <%= canEdit ? '' : 'disabled' %>><%= proposed.excerpt %></textarea>
 <label for="editor-category">Category</label><select id="editor-category" <%= canEdit ? '' : 'disabled' %>><% categories.forEach((category) => { %><option value="<%= category %>" <%= proposed.category === category ? 'selected' : '' %>><%= category %></option><% }) %></select>
 <label for="editor-image">Main image URL</label><input id="editor-image" maxlength="1000" value="<%= proposed.image %>" <%= canEdit ? '' : 'disabled' %>>
+<div class="reporter-image-preview-wrap editor-image-preview-wrap"><div class="editor-image-preview-frame article-image-crop"><img class="article-image-crop-image" id="editor-image-preview" alt="Preview of the proposed article image" hidden><p id="editor-image-preview-message" role="status">Add an image URL to preview how it will appear on the homepage.</p></div><span>Homepage image preview</span></div>
 <label for="editor-content">Article body</label><textarea id="editor-content" rows="14" <%= canEdit ? '' : 'disabled' %>><%= (proposed.content || []).join('\n') %></textarea>
 <% if (article.workflowStatus === 'pending') { %><div class="editor-review-actions"><button id="save-editor-changes" class="reporter-secondary-link" type="button">Save edits</button><button id="approve-editor-article" class="reporter-submit-button" type="button">Approve and publish <span aria-hidden="true">→</span></button></div>
 <label for="editor-review-note">Notes for the reporter</label><textarea id="editor-review-note" rows="4" maxlength="2000" placeholder="Explain what needs to be changed before resubmission"></textarea><button id="return-editor-article" class="editor-return-button" type="button">Return for revisions</button>

@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=9">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=mobile-menus-1">
     <script defer src="/assets/js/home.js?v=4"></script>
   </head>
   <body id="top">
@@ -23,7 +23,7 @@
           <div class="detail-category"><%= article.category %> <span aria-hidden="true">·</span> The Daily Web</div>
           <h1 class="detail-title"><%= article.title %></h1>
           <p class="detail-excerpt"><%= article.excerpt %></p>
-          <div class="detail-byline"><span>By <strong><%= article.author %></strong></span><time datetime="<%= article.publishedAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(article.publishedAt) %></time><span><%= article.readingTimeMinutes %> min read</span></div>
+          <div class="detail-byline"><span>By <strong><%= article.author %></strong></span><time datetime="<%= article.publishedAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(article.publishedAt) %></time></div>
         </header>
         <div class="detail-image-wrap"><img class="detail-image" src="<%= article.image %>" alt="Editorial photograph for <%= article.title %>"></div>
         <div class="detail-body">

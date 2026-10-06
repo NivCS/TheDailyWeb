@@ -97,8 +97,8 @@
     const isRead = getReadIds().includes(article.slug);
     const date = formatDate(article.publishedAt);
     return `<article class="story-card">
-      <a class="story-image-link" href="/article/${encodeURIComponent(article.slug)}" data-story-link="${escapeHtml(article.slug)}" aria-label="Read: ${escapeHtml(article.title)}">
-        <img class="story-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}" loading="lazy">
+      <a class="story-image-link article-image-crop" href="/article/${encodeURIComponent(article.slug)}" data-story-link="${escapeHtml(article.slug)}" aria-label="Read: ${escapeHtml(article.title)}">
+        <img class="story-image article-image-crop-image" src="${escapeHtml(article.image)}" alt="Editorial photograph for ${escapeHtml(article.title)}" loading="lazy">
         <span class="story-category">${escapeHtml(article.category)}</span>
         <span class="story-read-mark ${isRead ? '' : 'is-unread'}" aria-label="${isRead ? 'Read' : 'Unread'}">${isRead ? '✓' : ''}</span>
       </a>

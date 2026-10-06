@@ -3,6 +3,28 @@
   if (!page) return;
   const id = encodeURIComponent(page.dataset.articleId);
   const status = document.getElementById('editor-action-status');
+  const imageField = document.getElementById('editor-image');
+  const imagePreview = document.getElementById('editor-image-preview');
+  const imagePreviewMessage = document.getElementById('editor-image-preview-message');
+  function renderImagePreview() {
+    if (!imageField || !imagePreview || !imagePreviewMessage) return;
+    const url = imageField.value.trim();
+    imagePreview.hidden = true;
+    imagePreview.removeAttribute('src');
+    imagePreviewMessage.classList.remove('is-error');
+    if (!url) { imagePreviewMessage.textContent = 'Add an image URL to preview how it will appear on the homepage.'; return; }
+    if (!(url.startsWith('/') || /^https?:\/\//i.test(url))) {
+      imagePreviewMessage.textContent = 'Use a URL that starts with http://, https://, or /.';
+      imagePreviewMessage.classList.add('is-error');
+      return;
+    }
+    imagePreviewMessage.textContent = 'Loading image preview…';
+    imagePreview.onload = () => { imagePreview.hidden = false; imagePreviewMessage.textContent = ''; };
+    imagePreview.onerror = () => { imagePreview.hidden = true; imagePreviewMessage.textContent = 'This image could not be loaded. Check the URL.'; imagePreviewMessage.classList.add('is-error'); };
+    imagePreview.src = url;
+  }
+  renderImagePreview();
+  imageField?.addEventListener('input', renderImagePreview);
   const form = document.getElementById('editor-working-copy');
   const pending = page.dataset.workflowStatus === 'pending';
   const returned = page.dataset.workflowStatus === 'returned';

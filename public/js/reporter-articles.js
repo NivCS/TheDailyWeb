@@ -20,7 +20,9 @@
           throw new Error(data.error || 'This draft could not be deleted.');
         }
         const data = await response.json();
-        location.href = data.action === 'restored' ? '/reporter/articles?status=published' : '/reporter/articles?status=draft';
+        const currentFilters = new URLSearchParams(window.location.search);
+        const filterQuery = currentFilters.toString();
+        location.href = '/reporter/articles' + (filterQuery ? `?${filterQuery}` : '');
       } catch (error) {
         window.SiteDialog.notice(error.message || 'This draft could not be removed. Please try again.', { title: 'Draft could not be updated' });
         button.disabled = false;

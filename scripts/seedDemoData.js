@@ -12,7 +12,6 @@ const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
 const Comment = require('../models/Comment');
 const User = require('../models/User');
 const { hashPassword } = require('../services/passwords');
-const { estimateReadingTimeMinutes } = require('../services/readingTime');
 const DEMO_IMAGE_IDS = require('../data/demoImageIds.json');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -408,7 +407,6 @@ async function seed() {
       Object.assign(article, publicVersion, {
         status: 'published', approved: true, workflowStatus: isPending ? 'pending' : isReturned ? 'returned' : 'published',
         publishedAt: firstPublishedAt,
-        readingTimeMinutes: estimateReadingTimeMinutes(publicStory.content),
         workingCopy: isPending || isReturned ? pendingStory : publicStory,
         submittedCopy: isPending || isReturned ? pendingStory : undefined,
         reviewNote: isReturned ? 'Please add more detail about how residents can take part and clarify the expected timeline.' : '',
@@ -455,7 +453,6 @@ async function seed() {
       article.content = [];
       article.image = '';
       article.publishedAt = null;
-      article.readingTimeMinutes = estimateReadingTimeMinutes(story.content);
       article.status = isPending ? 'pending' : 'draft';
       article.approved = false;
       article.workflowStatus = isPending ? 'pending' : isReturned ? 'returned' : 'draft';

@@ -16,12 +16,12 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - Infinite scrolling loads up to 20 additional stories per request.
 - Search matches headline, summary, category, and reporter without a full-page refresh.
 - Category, read/unread, and publication-date/popularity filters update through AJAX requests.
-- Story cards show a headline, image, summary, category, author, publication date, reading time, and view count. Direct article requests return the full article content in the initial server-rendered HTML.
+- Story cards show a headline, image, summary, category, author, publication date, and view count. Direct article requests return the full article content in the initial server-rendered HTML.
 - Selecting a story opens its full article in the same app; read state is remembered in the browser.
 - Article pages show comments and let visitors post without refreshing the comment list.
 - Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
 - Reporter article drafts are owned by the signed-in reporter, autosave to MongoDB, and move through draft, pending, returned, and published editorial workflow states. Submitted changes to published articles are stored separately from the public version.
-- The reporter workspace filters by workflow status, sorts by last updated time, and supports the `Other` article category.
+- The reporter workspace filters by workflow status, searches article headlines, summaries, categories, and reporters, sorts by last updated time, and supports the `Other` article category.
 - Public home and article pages show Tel Aviv weather in Celsius. A shared MongoDB cache and refresh lock limit Open-Meteo requests to one refresh per five minutes across server workers.
 - Sample stories include published and pending states so the public feed visibility rule can be demonstrated.
 
@@ -30,7 +30,7 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - `models/Comment.js` and `models/CommentRateLimit.js` — comment and guest rate-limit schemas.
 - `models/Article.js` — article records, reporter ownership, editorial status, and separate working copies.
 - `models/WeatherCache.js` and `services/weather.js` — shared cached Open-Meteo weather data and refresh coordination.
-- `models/ArticleViewBucket.js` and `models/ArticlePublicationEvent.js` — sharded view history and publication history. Each article stores its lifetime view total and reading time.
+- `models/ArticleViewBucket.js` and `models/ArticlePublicationEvent.js` — sharded view history and publication history. Each article stores its lifetime view total.
 - `data/articleStore.js` — MongoDB article data access.
 - `data/reporterArticleStore.js` and `controllers/reporterController.js` — reporter ownership, draft autosave, and submission workflow.
 - `data/commentStore.js` — comment reads/writes and atomic guest rate-limit reservations.

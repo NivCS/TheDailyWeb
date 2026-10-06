@@ -5,7 +5,6 @@ const ArticlePublicationEvent = require('../models/ArticlePublicationEvent');
 const Comment = require('../models/Comment');
 const { recordPublicationEvent } = require('./analyticsStore');
 const { articleWorkflowStatus, publicVersion } = require('./reporterArticleStore');
-const { estimateReadingTimeMinutes } = require('../services/readingTime');
 function validId(id) { return mongoose.isValidObjectId(id); }
 function pendingFilter(id) {
   return { _id: id, $or: [{ workflowStatus: 'pending' }, { workflowStatus: { $exists: false }, status: 'pending' }, { workflowStatus: 'draft', status: 'pending' }] };
@@ -68,7 +67,6 @@ async function approveEditorArticle(id, workingCopy, editorId) {
         { $set: {
           title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
           category: workingCopy.category, image: workingCopy.image, workingCopy,
-          readingTimeMinutes: estimateReadingTimeMinutes(workingCopy.content),
           status: 'published', approved: true, workflowStatus: 'published',
           ...((current.status === 'published' && current.approved) ? {} : { publishedAt: eventAt }),
           reviewNote: ''
@@ -109,7 +107,6 @@ async function savePublishedEditorChanges(id, workingCopy, editorId) {
       const set = {
         title: workingCopy.title, excerpt: workingCopy.excerpt, content: workingCopy.content,
         category: workingCopy.category, image: workingCopy.image,
-        readingTimeMinutes: estimateReadingTimeMinutes(workingCopy.content)
       };
       if (!reporterDraftExists) {
         set.workingCopy = workingCopy;

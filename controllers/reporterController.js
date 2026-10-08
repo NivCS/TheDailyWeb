@@ -11,6 +11,7 @@ const {
 } = require('../data/reporterArticleStore');
 
 const categories = require('../config/articleCategories');
+const logger = require('../services/logger');
 const workflowLabels = {
   draft: 'In preparation',
   pending: 'Awaiting editor approval',
@@ -50,6 +51,7 @@ function reporterArticlesPage(req, res, next) {
 async function createArticle(req, res, next) {
   try {
     const article = await createReporterArticle(req.user.id, req.user.displayName || req.user.username);
+    logger.info('article_draft_created', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: String(article._id) });
     res.redirect(`/reporter/articles/${article._id}/edit`);
   } catch (error) {
     next(error);
@@ -138,6 +140,7 @@ async function removeDraft(req, res, next) {
   try {
     const result = await removeReporterDraft(req.params.id, req.user.id);
     if (!result) return res.status(409).json({ error: 'This draft can no longer be removed.' });
+    logger.info('article_draft_deleted', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: req.params.id });
     res.json(result);
   } catch (error) {
     next(error);
@@ -169,6 +172,7 @@ async function submitForReview(req, res, next) {
     if (!saved) return res.status(409).json({ error: 'This article can no longer be edited.' });
     const submitted = await submitReporterArticle(req.params.id, req.user.id, workingCopy);
     if (!submitted) return res.status(409).json({ error: 'This article cannot be submitted from its current state.' });
+    logger.info('article_submitted_for_review', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: req.params.id });
     res.json({ status: 'pending', message: 'Your article was sent to the editor for approval.' });
   } catch (error) {
     next(error);

@@ -3,6 +3,7 @@ const {
   returnEditorArticle, saveEditorChanges, savePublishedEditorChanges
 } = require('../data/editorArticleStore');
 const categories = require('../config/articleCategories');
+const logger = require('../services/logger');
 const statuses = ['draft', 'pending', 'returned', 'published'];
 const labels = { draft: 'In preparation', pending: 'Awaiting editor approval', returned: 'Returned for revisions', published: 'Published' };
 function editorHome(req, res) { res.redirect('/editor/articles?status=pending'); }
@@ -78,6 +79,7 @@ async function saveChanges(req, res, next) {
     if (problem) return res.status(400).json({ error: problem });
     const article = await saveEditorChanges(req.params.id, workingCopy);
     if (!article) return res.status(409).json({ error: 'This article is no longer awaiting review.' });
+    logger.info('editor_article_changes_saved', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: String(article._id) });
     res.json({ article: articleJson(article), message: 'Editor changes saved. The article is still awaiting approval.' });
   } catch (error) { next(error); }
 }
@@ -88,6 +90,7 @@ async function savePublishedChanges(req, res, next) {
     if (problem) return res.status(400).json({ error: problem });
     const article = await savePublishedEditorChanges(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer available as a published article.' });
+    logger.info('published_article_edited', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: String(article._id) });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles/' + article._id, message: 'Changes are now published.' });
   } catch (error) { next(error); }
 }
@@ -99,6 +102,7 @@ async function approve(req, res, next) {
     if (problem) return res.status(400).json({ error: problem });
     const article = await approveEditorArticle(req.params.id, workingCopy, req.user.id);
     if (!article) return res.status(409).json({ error: 'This article is no longer awaiting review.' });
+    logger.info('article_approved', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: String(article._id) });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles?status=published', message: 'The article is now published.' });
   } catch (error) { next(error); }
 }
@@ -108,6 +112,7 @@ async function returnForRevisions(req, res, next) {
     if (!note) return res.status(400).json({ error: 'Add a note explaining the revisions needed.' });
     const article = await returnEditorArticle(req.params.id, note);
     if (!article) return res.status(409).json({ error: 'This article is no longer awaiting review.' });
+    logger.info('article_returned_for_revisions', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: String(article._id) });
     res.json({ article: articleJson(article), redirectTo: '/editor/articles?status=returned', message: 'The article was returned to the reporter.' });
   } catch (error) { next(error); }
 }
@@ -115,6 +120,7 @@ async function removeArticle(req, res, next) {
   try {
     const deleted = await deleteEditorArticle(req.params.id);
     if (!deleted) return res.status(409).json({ error: 'Returned articles are read-only until the reporter resubmits them.' });
+    logger.info('editor_article_deleted', { requestId: req.requestId, userId: req.user.id, role: req.user.role, articleId: req.params.id });
     res.json({ redirectTo: '/editor/articles', message: 'The article was deleted.' });
   } catch (error) { next(error); }
 }

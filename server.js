@@ -7,14 +7,17 @@ const articleRoutes = require('./routes/articleRoutes');
 const weatherRoutes = require('./routes/weatherRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { loadUser } = require('./middleware/authentication');
+const requestContext = require('./middleware/requestContext');
 const { renderDetailPage } = require('./controllers/articleController');
 const categories = require('./config/articleCategories');
+const logger = require('./services/logger');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.use(requestContext);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use('/assets', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
@@ -32,7 +35,15 @@ app.get('*', (req, res) => {
 });
 
 app.use((error, req, res, next) => {
-  console.error(error);
+  if (res.headersSent) return next(error);
+  logger.error('request_failed', error, {
+    requestId: req.requestId,
+    method: req.method,
+    route: req.path,
+    userId: req.user?.id,
+    role: req.user?.role,
+    durationMs: Date.now() - req.requestStartedAt
+  });
   if (req.path.startsWith('/api/') || req.path.startsWith('/editor/api/')) {
     return res.status(500).json({ error: 'Something went wrong while processing this request.' });
   }
@@ -46,12 +57,33 @@ async function start() {
   }
 
   await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
+  logger.info('mongodb_connected');
+  mongoose.connection.on('disconnected', () => logger.warn('mongodb_disconnected'));
+  mongoose.connection.on('reconnected', () => logger.info('mongodb_reconnected'));
   app.listen(port, () => {
-    console.log(`The Daily Web is ready at http://localhost:${port}`);
+    logger.info('server_started', { port, environment: process.env.NODE_ENV || 'development' });
   });
 }
 
 start().catch((error) => {
-  console.error(`The Daily Web could not connect to MongoDB: ${error.message}`);
+  logger.error('server_start_failed', error);
   process.exitCode = 1;
+});
+
+process.on('SIGINT', () => {
+  logger.info('server_shutdown', { signal: 'SIGINT' });
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  logger.info('server_shutdown', { signal: 'SIGTERM' });
+  process.exit(0);
+});
+process.on('uncaughtException', (error) => {
+  logger.error('uncaught_exception', error);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error('unhandled_rejection', error);
+  process.exit(1);
 });

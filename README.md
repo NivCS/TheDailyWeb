@@ -10,6 +10,12 @@ An English-language news homepage built as the first step of the course project.
 
 The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file using the Atlas connection string. Article data is read from and stored in Atlas; the app does not use a local article-data fallback.
 
+## Logs
+
+- Logs are printed as JSON lines in the terminal and saved under `logs/app.log`.
+- The active log rotates at 5 MB. Up to three rotated files (`app.log.1` through `app.log.3`) are kept, for about 20 MB maximum total. The oldest backup is deleted when another rotation is needed.
+- The `logs/` directory is Git-ignored. Log records include request IDs, errors, access denials, authentication outcomes, database connection changes, and major editorial actions. Passwords, session tokens, cookies, request bodies, and article or comment text are not logged.
+
 ## Homepage features
 
 - Public feed includes only approved, published stories.

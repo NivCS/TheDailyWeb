@@ -1,6 +1,9 @@
 # The Daily Web
 
-An English-language news homepage built as the first step of the course project. The home page presents approved, published sample articles and loads article data through an asynchronous REST API.
+A full-stack news application built with Node.js, Express, EJS, and MongoDB for the course project.
+
+Made by: Niv Meir, Stacy Greenberg, Amit Caspi, Lia Audri, Maya Yosef.
+
 
 ## Run locally
 
@@ -10,63 +13,70 @@ An English-language news homepage built as the first step of the course project.
 
 The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file using the Atlas connection string. Article data is read from and stored in Atlas; the app does not use a local article-data fallback.
 
-## Logs
-
-- Logs are printed as JSON lines in the terminal and saved under `logs/app.log`.
-- The active log rotates at 5 MB. Up to three rotated files (`app.log.1` through `app.log.3`) are kept, for about 20 MB maximum total. The oldest backup is deleted when another rotation is needed.
-- The `logs/` directory is Git-ignored. Log records include request IDs, errors, access denials, authentication outcomes, database connection changes, and major editorial actions. Passwords, session tokens, cookies, request bodies, and article or comment text are not logged.
-
-## Homepage features
-
-- Public feed includes only approved, published stories.
-- Infinite scrolling loads up to 20 additional stories per request.
-- Search matches headline, summary, category, and reporter without a full-page refresh.
-- Category, read/unread, and publication-date/popularity filters update through AJAX requests.
-- Story cards show a headline, image, summary, category, author, publication date, and view count. Direct article requests return the full article content in the initial server-rendered HTML.
-- Selecting a story opens its full article in the same app; read state is remembered in the browser.
-- Article pages show comments and let visitors post without refreshing the comment list.
-- Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
-- Reporter article drafts are owned by the signed-in reporter, autosave to MongoDB, and move through draft, pending, returned, and published editorial workflow states. Submitted changes to published articles are stored separately from the public version.
-- Editors can moderate comments on published stories and manage user accounts from the Users section. User management supports searching, creation, role updates, and deletion; display names can be set at account creation. Deleting an account revokes its sessions and preserves article bylines and publication history.
-- The reporter workspace filters by workflow status, searches article headlines, summaries, categories, and reporters, sorts by last updated time, and supports the `Other` article category.
-- Public home and article pages show Tel Aviv weather in Celsius. A shared MongoDB cache and refresh lock limit Open-Meteo requests to one refresh per five minutes across server workers.
-- Sample stories include published and pending states so the public feed visibility rule can be demonstrated.
 
 ## Project structure
 
-- `models/Comment.js` and `models/CommentRateLimit.js` — comment and guest rate-limit schemas.
-- `models/Article.js` — article records, reporter ownership, editorial status, and separate working copies.
-- `models/WeatherCache.js` and `services/weather.js` — shared cached Open-Meteo weather data and refresh coordination.
-- `models/ArticleViewBucket.js` and `models/ArticlePublicationEvent.js` — sharded view history and publication history. Each article stores its lifetime view total.
-- `data/articleStore.js` — MongoDB article data access.
-- `data/reporterArticleStore.js` and `controllers/reporterController.js` — reporter ownership, draft autosave, and submission workflow.
-- `data/commentStore.js` — comment reads/writes and atomic guest rate-limit reservations.
-- `controllers/articleController.js` and `controllers/commentController.js` — request handling and input normalization.
-- `routes/articleRoutes.js` — REST endpoints for the public article list, article detail, and comments.
-- `routes/weatherRoutes.js` and `controllers/weatherController.js` — public current-weather endpoint.
-- `routes/authRoutes.js` — protected reporter/editor pages and workflow/analytics API endpoints.
-- `data/analyticsStore.js` and `controllers/analyticsController.js` — five-minute readership recording and editor analytics queries.
-- `views/editor-analytics.ejs` and `public/js/editor-analytics.js` — editor chart and publication markers.
-- `views/home.ejs` — page template and shared navigation/footer.
-- `public/js/home.js` and `public/css/styles.css` — client-side feed behavior and responsive styling.
+```text
+TheDailyWeb/
+|
+|-- server.js                 Application entry point
+|-- package.json              Commands and dependencies
+|-- config/                   Shared configuration
+|
+|-- routes/                   URL and HTTP method definitions
+|   |-- articleRoutes.js
+|   |-- authRoutes.js
+|   `-- weatherRoutes.js
+|
+|-- controllers/              Request and response handling
+|   |-- articleController.js
+|   |-- authController.js
+|   |-- commentController.js
+|   |-- editorController.js
+|   |-- reporterController.js
+|   |-- analyticsController.js
+|   `-- weatherController.js
+|
+|-- data/                     Database operations
+|   |-- articleStore.js
+|   |-- commentStore.js
+|   |-- reporterArticleStore.js
+|   |-- editorArticleStore.js
+|   `-- analyticsStore.js
+|
+|-- models/                   MongoDB document schemas
+|   |-- Article.js
+|   |-- Comment.js
+|   |-- User.js
+|   |-- Session.js
+|   `-- ...
+|
+|-- middleware/               Reusable request checks
+|-- services/                 Reusable business and external API logic
+|
+|-- views/                    EJS HTML templates
+|   |-- home.ejs
+|   |-- article.ejs
+|   |-- login.ejs
+|   `-- partials/
+|
+|-- public/                   Browser files
+|   |-- js/                   AJAX and page behavior
+|   `-- css/                  Styling
+|
+`-- scripts/                  Database and account utilities
+```
 
-The application follows an MVC-style structure: routes apply role checks, controllers handle HTTP requests, data stores encapsulate database operations, and Mongoose models define persisted records. Article creation, editing, review, publication, and deletion follow the reporter/editor workflow described below.
+## Core functionality
 
-## Impact analytics
+The Daily Web is an editorial news platform for publishing, reading, and managing online articles. Visitors can browse approved stories, search and filter the feed, open full articles, post comments, and view local weather information without full-page refreshes.
 
-- Only editors can open `/editor/analytics` or its article analytics API. The page supports 1-hour, 24-hour, 7-day, 30-day, and 90-day ranges.
-- A successful request for a published article increments its lifetime total and one five-minute bucket in the same transaction. Each bucket is split across eight counter shards so concurrent readers do not all write to one counter document.
-- The chart uses Chart.js with publication markers. New publication and approved-update events are written in the same MongoDB transaction as the article change.
-- Each article stores a lifetime view total. View history is also written to five-minute buckets split across eight shards; the editor chart groups longer ranges into hourly points and marks publication and approved-update events.
-- Published dates represent the first time an article became public. Later approved changes are recorded as publication events, so analytics can show the update without changing the original publication date.
-- For a fresh demonstration dataset, set `MONGODB_URI` and run `npm run seed-demo-data -- --replace`. This replaces article, comment, view-bucket, and publication-event data with 500 synthetic articles dated across the previous two months. It preserves existing accounts and adds reporter accounts if needed. New account passwords are written only to the Git-ignored `.demo-credentials.txt` file.
-- Demo content, comments, readership figures, and dates are fabricated for coursework demonstrations; they are not reports of real events.
+Implemented features include:
 
-## Accounts and authentication
-
-- Public visitors are guests and do not need accounts.
-- Reporter and editor accounts are created by running `npm run create-user` in an interactive terminal. The password is entered without echoing to the screen; do not add accounts or passwords to source control.
-- Passwords are hashed with Node.js `crypto.scrypt`; the original password is not stored.
-- Successful sign-in creates a random, HTTP-only cookie and a MongoDB-backed session that lasts seven days and remains valid across server restarts.
-- `/reporter` and `/editor` are protected on the server. A logged-in user with the wrong role receives an access-denied response.
-- In production, serve the app over HTTPS and set `NODE_ENV=production` so session cookies use the `Secure` attribute.
+- Asynchronous article feed with infinite scrolling, search, categories, read/unread status, and popularity sorting.
+- Server-rendered article pages with comments, view tracking, and guest comment rate limiting.
+- Reporter accounts with owned drafts, autosave, article submission, and revision workflow.
+- Editor accounts with article review, approval, return-for-revisions, publishing, comment moderation, and user management.
+- Role-based authentication with secure password hashing and MongoDB-backed sessions.
+- Reader analytics with lifetime views, time-based charts, and publication or update markers.
+- Cached Tel Aviv weather data retrieved from the Open-Meteo API.

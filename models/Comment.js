@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const commentSchema = new mongoose.Schema({
   article: { type: mongoose.Schema.Types.ObjectId, ref: 'Article', required: true },
   author: { type: String, required: true, trim: true, maxlength: 40 },
-  body: { type: String, required: true, trim: true, maxlength: 1000 }
+  body: { type: String, required: true, trim: true, maxlength: 1000 },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
 }, { timestamps: true });
 
 commentSchema.index({ article: 1, createdAt: 1 });

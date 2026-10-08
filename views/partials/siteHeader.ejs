@@ -12,6 +12,7 @@
         <a href="/" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'home' ? 'is-active' : '' %>">Home page</a>
         <a href="/editor/articles" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'editor' ? 'is-active' : '' %>">My workspace</a>
         <a href="/editor/analytics" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'analytics' ? 'is-active' : '' %>">Impact analytics</a>
+        <a href="/editor/users" class="nav-link <%= typeof activeNav !== 'undefined' && activeNav === 'users' ? 'is-active' : '' %>">Users</a>
       <% } %>
     <% } else { %>
       <a href="/" class="nav-link is-active" data-home-link>Home</a>

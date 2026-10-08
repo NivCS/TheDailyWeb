@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=mobile-menus-1">
-    <script defer src="/assets/js/home.js?v=6"></script>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=users-comments-1">
+    <script defer src="/assets/js/home.js?v=users-comments-1"></script>
   </head>
-  <body id="top">
+  <body id="top" data-editor="<%= currentUser && currentUser.role === 'editor' ? 'true' : 'false' %>">
     <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
     <%- include('partials/siteHeader', { currentUser }) %>
 

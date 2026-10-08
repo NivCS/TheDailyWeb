@@ -5,11 +5,12 @@ const WINDOW_MS = 60 * 1000;
 const GUEST_COMMENT_LIMIT = 3;
 
 async function listArticleComments(articleId) {
-  return Comment.find({ article: articleId })
+  const comments = await Comment.find({ article: articleId })
     .sort({ createdAt: 1 })
     .limit(200)
-    .select('author body createdAt')
+    .select('author body createdAt updatedAt updatedBy')
     .lean();
+  return comments.map(({ updatedBy, ...comment }) => ({ ...comment, wasEdited: Boolean(updatedBy) }));
 }
 
 async function reserveGuestComment(deviceHash, now = new Date()) {
@@ -52,4 +53,19 @@ async function createArticleComment({ articleId, author, body }) {
   return { _id: comment._id, author: comment.author, body: comment.body, createdAt: comment.createdAt };
 }
 
-module.exports = { listArticleComments, reserveGuestComment, createArticleComment, WINDOW_MS, GUEST_COMMENT_LIMIT };
+async function updateArticleComment(articleId, commentId, body, editorId) {
+  return Comment.findOneAndUpdate(
+    { _id: commentId, article: articleId },
+    { $set: { body, updatedBy: editorId } },
+    { new: true, runValidators: true }
+  ).select('author body createdAt updatedAt').lean();
+}
+
+async function deleteArticleComment(articleId, commentId) {
+  return Comment.findOneAndDelete({ _id: commentId, article: articleId }).select('_id').lean();
+}
+
+module.exports = {
+  listArticleComments, reserveGuestComment, createArticleComment,
+  updateArticleComment, deleteArticleComment, WINDOW_MS, GUEST_COMMENT_LIMIT
+};

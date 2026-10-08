@@ -1,6 +1,7 @@
 const { listPublishedArticles, findPublishedArticle } = require('../data/articleStore');
 const { listArticleComments } = require('../data/commentStore');
 const { recordArticleView } = require('../data/analyticsStore');
+const logger = require('../services/logger');
 
 const categories = require('../config/articleCategories');
 
@@ -33,7 +34,7 @@ async function detail(req, res, next) {
       const totalViews = await recordArticleView(article._id);
       if (totalViews !== false) article.views = totalViews;
     } catch (analyticsError) {
-      console.error('Could not record article view:', analyticsError.message);
+      logger.error('article_view_record_failed', analyticsError, { requestId: req.requestId, articleId: String(article._id) });
     }
     res.json({ article });
   } catch (error) {
@@ -49,7 +50,7 @@ async function renderDetailPage(req, res, next) {
       const totalViews = await recordArticleView(article._id);
       if (totalViews !== false) article.views = totalViews;
     } catch (analyticsError) {
-      console.error('Could not record article view:', analyticsError.message);
+      logger.error('article_view_record_failed', analyticsError, { requestId: req.requestId, articleId: String(article._id) });
     }
     const comments = await listArticleComments(article._id);
     res.render('article', {

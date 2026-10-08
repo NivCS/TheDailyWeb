@@ -10,6 +10,12 @@ An English-language news homepage built as the first step of the course project.
 
 The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file using the Atlas connection string. Article data is read from and stored in Atlas; the app does not use a local article-data fallback.
 
+## Logs
+
+- Logs are printed as JSON lines in the terminal and saved under `logs/app.log`.
+- The active log rotates at 5 MB. Up to three rotated files (`app.log.1` through `app.log.3`) are kept, for about 20 MB maximum total. The oldest backup is deleted when another rotation is needed.
+- The `logs/` directory is Git-ignored. Log records include request IDs, errors, access denials, authentication outcomes, database connection changes, and major editorial actions. Passwords, session tokens, cookies, request bodies, and article or comment text are not logged.
+
 ## Homepage features
 
 - Public feed includes only approved, published stories.
@@ -21,6 +27,7 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - Article pages show comments and let visitors post without refreshing the comment list.
 - Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
 - Reporter article drafts are owned by the signed-in reporter, autosave to MongoDB, and move through draft, pending, returned, and published editorial workflow states. Submitted changes to published articles are stored separately from the public version.
+- Editors can moderate comments on published stories and manage user accounts from the Users section. User management supports searching, creation, role updates, and deletion; display names can be set at account creation. Deleting an account revokes its sessions and preserves article bylines and publication history.
 - The reporter workspace filters by workflow status, searches article headlines, summaries, categories, and reporters, sorts by last updated time, and supports the `Other` article category.
 - Public home and article pages show Tel Aviv weather in Celsius. A shared MongoDB cache and refresh lock limit Open-Meteo requests to one refresh per five minutes across server workers.
 - Sample stories include published and pending states so the public feed visibility rule can be demonstrated.

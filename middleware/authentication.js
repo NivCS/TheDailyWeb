@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const Session = require('../models/Session');
+const logger = require('../services/logger');
 
 const COOKIE_NAME = 'dailyweb_session';
 
@@ -48,8 +49,14 @@ async function loadUser(req, res, next) {
 
 function requireRole(role) {
   return (req, res, next) => {
-    if (!req.user) return res.redirect('/login');
-    if (req.user.role !== role) return res.status(403).render('access-denied', { pageTitle: 'Access denied' });
+    if (!req.user) {
+      logger.warn('access_denied', { requestId: req.requestId, requiredRole: role, reason: 'not_authenticated', route: req.path });
+      return res.redirect('/login');
+    }
+    if (req.user.role !== role) {
+      logger.warn('access_denied', { requestId: req.requestId, userId: req.user.id, role: req.user.role, requiredRole: role, reason: 'wrong_role', route: req.path });
+      return res.status(403).render('access-denied', { pageTitle: 'Access denied' });
+    }
     next();
   };
 }

@@ -59,7 +59,6 @@ The application follows an MVC-style structure: routes apply role checks, contro
 - The chart uses Chart.js with publication markers. New publication and approved-update events are written in the same MongoDB transaction as the article change.
 - Each article stores a lifetime view total. View history is also written to five-minute buckets split across eight shards; the editor chart groups longer ranges into hourly points and marks publication and approved-update events.
 - Published dates represent the first time an article became public. Later approved changes are recorded as publication events, so analytics can show the update without changing the original publication date.
-- For a fresh demonstration dataset, set `MONGODB_URI` and run `npm run seed-demo-data -- --replace`. This replaces article, comment, view-bucket, and publication-event data with 500 synthetic articles dated across the previous two months. It preserves existing accounts and adds reporter accounts if needed. New account passwords are written only to the Git-ignored `.demo-credentials.txt` file.
 - Demo content, comments, readership figures, and dates are fabricated for coursework demonstrations; they are not reports of real events.
 
 ## Accounts and authentication

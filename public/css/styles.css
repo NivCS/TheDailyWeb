@@ -184,13 +184,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .auth-submit { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding: 14px 16px; border: 0; border-radius: 3px; background: var(--forest); color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
 .auth-submit:hover { background: #294635; }
 .auth-error { margin: 0 0 16px; padding: 11px 13px; border-left: 3px solid #a44135; background: #fbefeb; color: #81372e; font-size: 12px; }
-.auth-footnote, .workspace-next { margin: 22px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.auth-footnote { margin: 22px 0 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
 .auth-footer { padding: 24px; color: var(--muted); font-size: 10px; text-align: center; }
 .auth-footer a { color: var(--ink); font-weight: 700; }
 .auth-footer span { padding: 0 7px; }
-.workspace-card { width: min(100%, 640px); }
-.workspace-account { display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 11px; }
-.workspace-account form { margin: 0; }
 .text-button, .nav-button { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
 .workspace-home { display: inline-flex; align-items: center; gap: 12px; margin-top: 26px; color: #4c6841; font-size: 12px; font-weight: 700; }
 .reporter-main { width: min(100%, 1120px); min-height: 72vh; margin: 0 auto; padding: 58px clamp(22px, 6vw, 78px) 82px; }

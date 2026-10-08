@@ -56,17 +56,4 @@ async function logout(req, res, next) {
   }
 }
 
-function renderWorkspace(req, res, roleLabel, heading, workspaceMessage) {
-  res.render('workspace', { pageTitle: `${heading} | The Daily Web`, heading, roleLabel, username: req.user.username, workspaceMessage, activeNav: heading === 'Impact analytics' ? 'analytics' : 'editor' });
-}
-
-function editorHome(req, res) {
-  renderWorkspace(req, res, 'Editor', 'Editor workspace', 'Your protected editor area is ready for the article workflow implementation.');
-}
-
-function editorArticles(req, res) {
-  const heading = req.query.status === 'pending' ? 'Review queue' : 'All articles';
-  renderWorkspace(req, res, 'Editor', heading, 'Article review, publishing, and management tools will be implemented in the next project step.');
-}
-
-module.exports = { loginPage, login, logout, editorHome, editorArticles };
+module.exports = { loginPage, login, logout };

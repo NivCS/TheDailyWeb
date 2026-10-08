@@ -170,10 +170,86 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...ids])); } catch { /* Reading still works if storage is disabled. */ }
   };
 
-  const commentMarkup = (comment) => `<article class="comment-item">
-    <div class="comment-meta"><strong>${escapeHtml(comment.author || 'Guest')}</strong><time datetime="${escapeHtml(comment.createdAt)}">${escapeHtml(formatDate(comment.createdAt))}</time></div>
-    <p>${escapeHtml(comment.body)}</p>
+  const commentMarkup = (comment) => `<article class="comment-item" data-comment-id="${escapeHtml(comment._id)}">
+    <div class="comment-meta"><strong>${escapeHtml(comment.author || 'Guest')}</strong><time datetime="${escapeHtml(comment.createdAt)}">${escapeHtml(formatDate(comment.createdAt))}</time>${comment.wasEdited ? '<span class="comment-edited">Edited</span>' : ''}${document.body.dataset.editor === 'true' ? `<span class="comment-actions"><button class="comment-action" type="button" data-comment-action="edit" aria-label="Edit comment" title="Edit comment"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19.8 7.7a2.1 2.1 0 0 0-3-3L4 16.5Z"></path><path d="m15.5 6 3 3"></path></svg></button><button class="comment-action is-danger" type="button" data-comment-action="delete" aria-label="Delete comment" title="Delete comment"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 4v5m4-5v5"></path></svg></button></span>` : ''}</div>
+    <p class="comment-body">${escapeHtml(comment.body)}</p>
   </article>`;
+
+  function bindCommentActions(slug) {
+    const list = document.getElementById('comment-list');
+    if (!list || document.body.dataset.editor !== 'true' || list.dataset.actionsBound === 'true') return;
+    list.dataset.actionsBound = 'true';
+    list.addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-comment-action]');
+      if (!button) return;
+      const item = button.closest('.comment-item');
+      const commentId = item?.dataset.commentId;
+      if (!commentId) return;
+
+      if (button.dataset.commentAction === 'edit') {
+        const original = item.querySelector('.comment-body')?.textContent || '';
+        const form = document.createElement('form');
+        form.className = 'comment-edit-form';
+        const textarea = document.createElement('textarea');
+        textarea.name = 'body';
+        textarea.maxLength = 1000;
+        textarea.required = true;
+        textarea.rows = 4;
+        textarea.value = original;
+        const actions = document.createElement('div');
+        actions.className = 'comment-edit-actions';
+        const save = document.createElement('button');
+        save.type = 'submit';
+        save.className = 'comment-edit-save';
+        save.textContent = 'Save changes';
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'comment-edit-cancel';
+        cancel.textContent = 'Cancel';
+        actions.append(save, cancel);
+        form.append(textarea, actions);
+        item.querySelector('.comment-body')?.replaceWith(form);
+        textarea.focus();
+        cancel.addEventListener('click', () => loadComments(slug));
+        form.addEventListener('submit', async (submitEvent) => {
+          submitEvent.preventDefault();
+          save.disabled = true;
+          try {
+            const response = await fetch(`/api/articles/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify({ body: textarea.value })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'The comment could not be updated.');
+            item.outerHTML = commentMarkup(data.comment);
+            document.getElementById('comment-status').textContent = 'Comment updated.';
+          } catch (error) {
+            save.disabled = false;
+            document.getElementById('comment-status').textContent = error.message || 'The comment could not be updated.';
+          }
+        });
+        return;
+      }
+
+      const confirmed = window.SiteDialog
+        ? await window.SiteDialog.confirm({ title: 'Delete this comment?', message: 'This comment will be permanently removed.', confirmLabel: 'Delete comment', danger: true })
+        : window.confirm('Delete this comment?');
+      if (!confirmed) return;
+      button.disabled = true;
+      try {
+        const response = await fetch(`/api/articles/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'The comment could not be deleted.');
+        item.remove();
+        if (!list.querySelector('.comment-item')) list.innerHTML = '<p class="comment-empty">No comments yet. Start the conversation.</p>';
+        document.getElementById('comment-status').textContent = 'Comment deleted.';
+      } catch (error) {
+        button.disabled = false;
+        document.getElementById('comment-status').textContent = error.message || 'The comment could not be deleted.';
+      }
+    });
+  }
 
   async function loadComments(slug) {
     const list = document.getElementById('comment-list');
@@ -183,6 +259,7 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Comments could not be loaded.');
       list.innerHTML = data.comments.length ? data.comments.map(commentMarkup).join('') : '<p class="comment-empty">No comments yet. Start the conversation.</p>';
+      bindCommentActions(slug);
       status.textContent = '';
     } catch (error) {
       status.textContent = error.message || 'Comments could not be loaded. Please try again.';

@@ -49,12 +49,15 @@ async function loadUser(req, res, next) {
 
 function requireRole(role) {
   return (req, res, next) => {
+    const isApiRequest = req.originalUrl.startsWith('/api/') || req.originalUrl.startsWith('/editor/api/');
     if (!req.user) {
       logger.warn('access_denied', { requestId: req.requestId, requiredRole: role, reason: 'not_authenticated', route: req.path });
+      if (isApiRequest) return res.status(401).json({ error: 'Sign in to continue.' });
       return res.redirect('/login');
     }
     if (req.user.role !== role) {
       logger.warn('access_denied', { requestId: req.requestId, userId: req.user.id, role: req.user.role, requiredRole: role, reason: 'wrong_role', route: req.path });
+      if (isApiRequest) return res.status(403).json({ error: 'Access denied.' });
       return res.status(403).render('access-denied', { pageTitle: 'Access denied' });
     }
     next();

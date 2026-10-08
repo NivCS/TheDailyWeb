@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f7f7f3">
+<title><%= pageTitle %></title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css?v=users-comments-4"><script defer src="/assets/js/editor-users.js?v=1"></script></head>
+<body class="reporter-body">
+<div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
+<%- include('partials/siteHeader', { currentUser, activeNav: 'users' }) %>
+<main class="reporter-main editor-main editor-users-main">
+  <section class="reporter-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> Administration</p><h1>Manage <span>users</span></h1><p>Create accounts and manage reporter and editor access.</p></div></section>
+  <% if (notice) { %><p class="users-notice <%= isError ? 'is-error' : '' %>" role="status"><%= notice %></p><% } %>
+  <section class="users-create-panel" aria-labelledby="create-user-heading">
+    <div><p class="eyebrow"><span class="eyebrow-line"></span> New account</p><h2 id="create-user-heading">Create a user</h2></div>
+    <form action="/editor/users" method="post" class="users-create-form">
+      <label>Username<input name="username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9._-]{3,30}" autocomplete="off"></label>
+      <label>Display name<input name="displayName" maxlength="80" autocomplete="name"></label>
+      <label>Role<select name="role"><option value="reporter">Reporter</option><option value="editor">Editor</option></select></label>
+      <label>Password<input name="password" type="password" required minlength="10" maxlength="200" autocomplete="new-password"></label>
+      <button class="reporter-primary-link" type="submit">Create account <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="users-password-hint">Password must be at least 10 characters.</p>
+  </section>
+  <section class="users-list-panel" aria-labelledby="users-list-heading">
+    <div class="users-list-heading"><div><p class="eyebrow"><span class="eyebrow-line"></span> Accounts</p><h2 id="users-list-heading">All users <span><%= users.length %></span></h2></div>
+      <form class="users-search" action="/editor/users" method="get"><label class="sr-only" for="user-search">Search users</label><input id="user-search" name="search" type="search" maxlength="120" value="<%= search %>" placeholder="Search username or name"><button class="reporter-filter-button" type="submit">Search</button></form>
+    </div>
+    <% if (!users.length) { %><div class="reporter-empty"><strong>No users found.</strong><span>Try another search.</span></div><% } %>
+    <div class="users-table-wrap"><table class="users-table"><thead><tr><th>Account</th><th>Display name</th><th>Role</th><th>Actions</th></tr></thead><tbody>
+      <% users.forEach((user) => { const isSelf = String(user._id) === String(currentUser.id); %>
+      <tr>
+        <td><strong><%= user.username %></strong><% if (isSelf) { %><span class="users-you-tag">You</span><% } %></td>
+        <td><%= user.displayName || '—' %></td>
+        <td><label class="sr-only" for="role-<%= user._id %>">Role for <%= user.username %></label><% if (isSelf) { %><span class="users-role-label">Editor</span><% } else { %><form id="user-update-<%= user._id %>" class="user-edit-form" action="/editor/users/<%= user._id %>" method="post"><select class="user-role-select" id="role-<%= user._id %>" name="role"><option value="reporter" <%= user.role === 'reporter' ? 'selected' : '' %>>Reporter</option><option value="editor" <%= user.role === 'editor' ? 'selected' : '' %>>Editor</option></select><button class="reporter-secondary-link" type="submit">Save role</button></form><% } %></td>
+        <td class="users-row-actions"><% if (!isSelf) { %><form class="user-delete-form" action="/editor/users/<%= user._id %>/delete" method="post"><button class="users-delete-button" type="submit" aria-label="Delete <%= user.username %>" title="Delete user"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 4v5m4-5v5"></path></svg><span>Delete</span></button></form><% } %></td>
+      </tr>
+      <% }) %>
+    </tbody></table></div>
+  </section>
+  <a class="reporter-home-link" href="/editor/articles">Return to the editor workspace <span aria-hidden="true">→</span></a>
+</main>
+<footer class="auth-footer"><a href="/">The Daily Web</a> <span>·</span> Independent by design. Curious by nature.</footer>
+</body></html>

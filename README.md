@@ -27,6 +27,7 @@ The application requires MongoDB Atlas. Set `MONGODB_URI` in a local `.env` file
 - Article pages show comments and let visitors post without refreshing the comment list.
 - Guest comments are limited on the server to three per device in a rolling 60-second window. The browser receives an HTTP-only device cookie; rate-limit counters are stored in MongoDB.
 - Reporter article drafts are owned by the signed-in reporter, autosave to MongoDB, and move through draft, pending, returned, and published editorial workflow states. Submitted changes to published articles are stored separately from the public version.
+- Editors can moderate comments on published stories and manage user accounts from the Users section. User management supports searching, creation, role updates, and deletion; display names can be set at account creation. Deleting an account revokes its sessions and preserves article bylines and publication history.
 - The reporter workspace filters by workflow status, searches article headlines, summaries, categories, and reporters, sorts by last updated time, and supports the `Other` article category.
 - Public home and article pages show Tel Aviv weather in Celsius. A shared MongoDB cache and refresh lock limit Open-Meteo requests to one refresh per five minutes across server workers.
 - Sample stories include published and pending states so the public feed visibility rule can be demonstrated.

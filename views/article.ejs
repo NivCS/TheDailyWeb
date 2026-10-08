@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/styles.css?v=mobile-menus-1">
-    <script defer src="/assets/js/home.js?v=4"></script>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=users-comments-1">
+    <script defer src="/assets/js/home.js?v=users-comments-1"></script>
   </head>
-  <body id="top">
+  <body id="top" data-editor="<%= currentUser && currentUser.role === 'editor' ? 'true' : 'false' %>">
     <div class="topline"><span class="live-dot"></span> THE DAILY BRIEFING <span class="topline-divider">/</span> INDEPENDENT NEWS, EVERY DAY</div>
     <%- include('partials/siteHeader', { currentUser, activeNav }) %>
 
@@ -37,9 +37,11 @@
           <div id="comment-list" class="comment-list" aria-live="polite">
             <% if (comments.length) { %>
               <% comments.forEach((comment) => { %>
-                <article class="comment-item">
-                  <div class="comment-meta"><strong><%= comment.author || 'Guest' %></strong><time datetime="<%= comment.createdAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(comment.createdAt) %></time></div>
-                  <p><%= comment.body %></p>
+                <article class="comment-item" data-comment-id="<%= comment._id %>">
+                  <div class="comment-meta"><strong><%= comment.author || 'Guest' %></strong><time datetime="<%= comment.createdAt.toISOString() %>"><%= new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(comment.createdAt) %></time><% if (comment.wasEdited) { %><span class="comment-edited">Edited</span><% } %>
+                    <% if (currentUser && currentUser.role === 'editor') { %><span class="comment-actions"><button class="comment-action" type="button" data-comment-action="edit" aria-label="Edit comment" title="Edit comment"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19.8 7.7a2.1 2.1 0 0 0-3-3L4 16.5Z"></path><path d="m15.5 6 3 3"></path></svg></button><button class="comment-action is-danger" type="button" data-comment-action="delete" aria-label="Delete comment" title="Delete comment"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-.8 13H6.8L6 7m4 4v5m4-5v5"></path></svg></button></span><% } %>
+                  </div>
+                  <p class="comment-body"><%= comment.body %></p>
                 </article>
               <% }) %>
             <% } else { %>
